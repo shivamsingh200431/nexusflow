@@ -1,16 +1,7 @@
 import { Link, Route, Routes } from "react-router-dom";
-
-function Dashboard() {
-  return <h1>Dashboard</h1>;
-}
-
-function FlowBuilder() {
-  return <h1>Flow Builder</h1>;
-}
-
-function Devices() {
-  return <h1>Devices</h1>;
-}
+import Dashboard from "./pages/Dashboard";
+import FlowBuilder from "./pages/FlowBuilder";
+import Devices from "./pages/Devices";
 
 function App() {
   return (
