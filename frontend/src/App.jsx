@@ -2,8 +2,17 @@ import { Link, Route, Routes } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import FlowBuilder from "./pages/FlowBuilder";
 import Devices from "./pages/Devices";
+import { useEffect } from 'react';
+import { alert$ } from './rule-engine/pipeline.js';
 
 function App() {
+  useEffect(() => {
+    const subscription = alert$.subscribe((alert) => {
+      console.log(alert);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
   return (
     <>
       <nav>
