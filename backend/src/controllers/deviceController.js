@@ -2,15 +2,16 @@ import Device from "../models/Device.js";
 
 export const createDevice = async (req, res) => {
   try {
-    const { name, type, status, metadata } = req.body;
+    const { deviceId, name, type, status, metadata } = req.body;
 
-    if (!name || !type) {
+    if (!deviceId || !name || !type) {
       return res.status(400).json({
-        message: "name and type are required",
+        message: "deviceId, name, and type are required",
       });
     }
 
     const device = await Device.create({
+      deviceId,
       name,
       type,
       status,

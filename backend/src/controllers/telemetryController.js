@@ -1,4 +1,5 @@
 import Telemetry from "../models/Telemetry.js";
+import Device from "../models/Device.js";
 
 export const createTelemetry = async (req, res) => {
   try {
@@ -8,6 +9,14 @@ export const createTelemetry = async (req, res) => {
       return res.status(400).json({
         message: "timestamp, deviceId and metrics are required",
       });
+    }
+
+    const device = await Device.findOne({ deviceId });
+
+    if (!device) {
+      return res.status(404).json({
+        message: "Device not found",
+    });
     }
 
     const telemetry = await Telemetry.create({
