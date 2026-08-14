@@ -4,7 +4,7 @@ import { aboveThreshold } from './threshold.js';
 import { toAlert } from './alert.js';
 
 export const alerts$ = mockTelemetry$.pipe(
-  movingAverage(),
+  movingAverage('temperature'),
   aboveThreshold(),
-  toAlert()
+  toAlert('threshold-1')
 );

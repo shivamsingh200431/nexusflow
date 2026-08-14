@@ -1,12 +1,17 @@
 import { scan } from 'rxjs/operators';
 
-const WINDOW_SIZE = 5; // average over the last 5 readings
+const WINDOW_SIZE = 5;
 
-export function movingAverage() {
-  return scan((history, reading) => {
-    const updatedHistory = [...history, reading.value].slice(-WINDOW_SIZE);
-    const avg = updatedHistory.reduce((sum, v) => sum + v, 0) / updatedHistory.length;
+export function movingAverage(metric = 'temperature') {
+  return scan((acc, reading) => {
+    const rawValue = reading.metrics[metric];
+    const history = [...acc.history, rawValue].slice(-WINDOW_SIZE);
+    const avg = history.reduce((sum, v) => sum + v, 0) / history.length;
 
-    return { ...reading, value: avg, history: updatedHistory };
-  }, { history: [] });
+    return {
+      ...reading,
+      history,
+      value: avg,
+    };
+  }, { history: [], value: null });
 }
