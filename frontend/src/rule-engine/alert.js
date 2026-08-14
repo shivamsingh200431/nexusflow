@@ -1,6 +1,6 @@
 import { map } from 'rxjs/operators';
 
-export function toAlert(ruleId = 'threshold-1') {
+export function toAlert(ruleId) {
   return map((reading) => ({
     type: 'alert',
     timestamp: new Date().toISOString(),

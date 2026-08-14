@@ -1,7 +1,14 @@
 import { filter } from 'rxjs/operators';
 
-const THRESHOLD = 80;
+const OPERATORS = {
+  '>': (a, b) => a > b,
+  '<': (a, b) => a < b,
+  '>=': (a, b) => a >= b,
+  '<=': (a, b) => a <= b,
+  '==': (a, b) => a === b,
+};
 
-export function aboveThreshold() {
-  return filter((reading) => reading.value > THRESHOLD);
+export function checkThreshold(operator = '>', value = 80) {
+  const compare = OPERATORS[operator];
+  return filter((reading) => compare(reading.value, value));
 }
