@@ -1,17 +1,17 @@
 import { map } from 'rxjs/operators';
 
-export function toAlert(ruleId) {
+export function toAlert(ruleId, metric, operator, thresholdValue) {
   return map((reading) => ({
     type: 'alert',
     timestamp: new Date().toISOString(),
     deviceId: reading.deviceId,
     ruleId,
     severity: 'high',
-    message: 'Temperature exceeded 80°C',
+    message: `${metric} ${operator} ${thresholdValue} (actual: ${reading.value.toFixed(1)})`,
     data: {
-      metric: 'temperature',
+      metric,
       value: Number(reading.value.toFixed(1)),
-      threshold: 80,
+      threshold: thresholdValue,
     },
   }));
 }
