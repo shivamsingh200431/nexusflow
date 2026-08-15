@@ -1,8 +1,11 @@
+import { Link, Route, Routes } from "react-router-dom";
 import { useState, useCallback } from 'react'
 import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
 import FlowCanvas from './components/FlowCanvas'
 import NodePalette from './components/NodePalette'
 import NodeConfig from './components/NodeConfig'
+import Dashboard from './pages/Dashboard'
+import Devices from './pages/devices'
 import './App.css'
 
 const STORAGE_KEY = 'nexusflow-graph'
@@ -40,7 +43,7 @@ const INITIAL_EDGES = [
   { id: 'edge-3', source: 'threshold-1', target: 'alert-1' },
 ]
 
-export default function App() {
+function FlowBuilder() {
   const [nodes, setNodes, onNodesChange] = useNodesState(INITIAL_NODES)
   const [edges, setEdges, onEdgesChange] = useEdgesState(INITIAL_EDGES)
   const [selectedId, setSelectedId] = useState(null)
@@ -120,3 +123,25 @@ export default function App() {
     </div>
   )
 }
+
+function App() {
+  return (
+    <>
+      <nav>
+        <Link to="/">Dashboard</Link>{" "}
+        <Link to="/flow-builder">Flow Builder</Link>{" "}
+        <Link to="/devices">Devices</Link>
+      </nav>
+
+      <main>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/flow-builder" element={<FlowBuilder />} />
+          <Route path="/devices" element={<Devices />} />
+        </Routes>
+      </main>
+    </>
+  )
+}
+
+export default App

@@ -49,3 +49,14 @@ body {
 code {
   font-family: 'Consolas', 'SF Mono', ui-monospace, monospace;
 }
+
+/* Basic nav/main styles from main */
+nav {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+main {
+  padding: 2rem;
+}

@@ -405,3 +405,14 @@
   .nf-navbar__actions { gap: 6px; }
   .nf-btn { padding: 6px 10px; font-size: 12px; }
 }
+
+/* Basic nav/main styles for main's page structure (non-React-Flow pages) */
+nav {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+main {
+  padding: 2rem;
+}

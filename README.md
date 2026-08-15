@@ -1,47 +1,29 @@
 # NexusFlow
 
-NexusFlow is a Visual IoT Telemetry & Rule Engine built using the MERN Stack.
-
-The platform allows users to visually design automation workflows that process real-time IoT telemetry and trigger actions such as alerts and webhooks.
-
-## Features
-
-- Visual Rule Builder
-- Live Telemetry Streaming
-- MongoDB Time-Series Collections
-- RxJS Rule Engine
-- Real-time Dashboard
-- WebSocket Communication
-- Alert & Webhook System
+NexusFlow is a visual IoT telemetry and rule engine that allows users to build
+data-processing pipelines through a visual node-based interface.
 
 ## Tech Stack
 
 ### Frontend
-
 - React
+- Vite
 - React Flow
 - React Router
 - Axios
 - Recharts
 
 ### Backend
-
 - Node.js
 - Express
-- Socket.IO
-- RxJS
+- Mongoose
+- MongoDB Atlas
+- Nodemon
 
-### Database
+## Project Structure
 
-- MongoDB Time-Series
-
-## Team
-
-- Shivam Singh (Team Lead / Backend)
-- Sagar (Frontend)
-- Vimalesh (Frontend)
-
-## Status
-
-🚧 Planning Phase
-# nexusflow
+```text
+nexusflow/
+├── frontend/
+├── backend/
+└── docs/
