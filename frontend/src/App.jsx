@@ -21,19 +21,19 @@ const INITIAL_NODES = [
     id: 'movingAverage-1',
     type: 'movingAverage',
     position: { x: 200, y: 260 },
-    data: { operation: 'moving_average', window: 5 },
+    data: { metric: 'temperature', window: 5 },
   },
   {
     id: 'threshold-1',
     type: 'threshold',
     position: { x: 200, y: 440 },
-    data: { field: 'temperature', operator: '>', value: 80 },
+    data: { metric: 'temperature', operator: '>', value: 80 },
   },
   {
     id: 'alert-1',
     type: 'alert',
     position: { x: 200, y: 620 },
-    data: { message: 'High Temperature', severity: 'critical' },
+    data: { channel: 'mock-sms' },
   },
 ]
 

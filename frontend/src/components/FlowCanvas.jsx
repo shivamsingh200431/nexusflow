@@ -1,4 +1,5 @@
-import { ReactFlow, Background, Controls, MiniMap } from '@xyflow/react'
+import { useCallback } from 'react'
+import { ReactFlow, Background, Controls, MiniMap, Handle, Position } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 
 import SensorNode from './nodes/SensorNode'
@@ -6,14 +7,71 @@ import MovingAverageNode from './nodes/MovingAverageNode'
 import ThresholdNode from './nodes/ThresholdNode'
 import AlertNode from './nodes/AlertNode'
 
-const nodeTypes = {
-  sensor: SensorNode,
-  movingAverage: MovingAverageNode,
-  threshold: ThresholdNode,
-  alert: AlertNode,
+// V1 compiler supports only the linear chain: Sensor -> Moving Average -> Threshold -> Alert
+const ALLOWED_CONNECTIONS = {
+  sensor: ['movingAverage'],
+  movingAverage: ['threshold'],
+  threshold: ['alert'],
+}
+
+function isValidConnection(sourceType, targetType) {
+  const allowedTargets = ALLOWED_CONNECTIONS[sourceType]
+  return allowedTargets && allowedTargets.includes(targetType)
+}
+
+function SensorNodeWrapper({ data, ...rest }) {
+  return (
+    <SensorNode data={data} {...rest}>
+      <Handle type="source" position={Position.Right} id="source" />
+    </SensorNode>
+  )
+}
+
+function MovingAverageNodeWrapper({ data, ...rest }) {
+  return (
+    <MovingAverageNode data={data} {...rest}>
+      <Handle type="target" position={Position.Left} id="target" />
+      <Handle type="source" position={Position.Right} id="source" />
+    </MovingAverageNode>
+  )
+}
+
+function ThresholdNodeWrapper({ data, ...rest }) {
+  return (
+    <ThresholdNode data={data} {...rest}>
+      <Handle type="target" position={Position.Left} id="target" />
+      <Handle type="source" position={Position.Right} id="source" />
+    </ThresholdNode>
+  )
+}
+
+function AlertNodeWrapper({ data, ...rest }) {
+  return (
+    <AlertNode data={data} {...rest}>
+      <Handle type="target" position={Position.Left} id="target" />
+    </AlertNode>
+  )
+}
+
+const nodeTypesWithHandles = {
+  sensor: SensorNodeWrapper,
+  movingAverage: MovingAverageNodeWrapper,
+  threshold: ThresholdNodeWrapper,
+  alert: AlertNodeWrapper,
 }
 
 export default function FlowCanvas({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, onPaneClick }) {
+  const handleConnect = useCallback(
+    (params) => {
+      const sourceNode = nodes.find((n) => n.id === params.source)
+      const targetNode = nodes.find((n) => n.id === params.target)
+      if (sourceNode && targetNode && isValidConnection(sourceNode.type, targetNode.type)) {
+        onConnect(params)
+      }
+    },
+    [nodes, onConnect]
+  )
+
   return (
     <div className="nf-canvas">
       <ReactFlow
@@ -21,10 +79,10 @@ export default function FlowCanvas({ nodes, edges, onNodesChange, onEdgesChange,
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
+        onConnect={handleConnect}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
-        nodeTypes={nodeTypes}
+        nodeTypes={nodeTypesWithHandles}
         fitView
         proOptions={{ hideAttribution: true }}
       >

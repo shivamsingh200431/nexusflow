@@ -14,17 +14,16 @@ const CONFIG_FIELDS = {
     { key: 'metric', label: 'Metric', type: 'select', options: ['temperature', 'pressure', 'humidity', 'vibration', 'voltage', 'current'] },
   ],
   movingAverage: [
-    { key: 'operation', label: 'Operation', type: 'select', options: ['moving_average', 'min', 'max', 'sum', 'count'] },
+    { key: 'metric', label: 'Metric', type: 'select', options: ['temperature', 'pressure', 'humidity', 'vibration', 'voltage', 'current'] },
     { key: 'window', label: 'Window', type: 'number', min: 1, max: 100 },
   ],
   threshold: [
-    { key: 'field', label: 'Field', type: 'text' },
-    { key: 'operator', label: 'Operator', type: 'select', options: ['>', '<', '>=', '<=', '==', '!='] },
+    { key: 'metric', label: 'Metric', type: 'select', options: ['temperature', 'pressure', 'humidity', 'vibration', 'voltage', 'current'] },
+    { key: 'operator', label: 'Operator', type: 'select', options: ['>', '<', '>=', '<=', '=='] },
     { key: 'value', label: 'Value', type: 'number', step: 'any' },
   ],
   alert: [
-    { key: 'message', label: 'Message', type: 'text' },
-    { key: 'severity', label: 'Severity', type: 'select', options: ['info', 'warning', 'critical'] },
+    { key: 'channel', label: 'Channel', type: 'select', options: ['mock-sms', 'mock-email', 'mock-webhook'] },
   ],
 }
 
