@@ -1,0 +1,62 @@
+:root {
+  /* NexusFlow dark theme */
+  --bg: #0b0f17;
+  --bg-raised: #111827;
+  --panel: #141c2b;
+  --panel-border: #22304a;
+  --canvas-bg: #0e1420;
+  --text: #e5eaf2;
+  --text-muted: #8b96a8;
+  --text-faint: #5b6578;
+
+  --accent: #38bdf8;
+  --accent-soft: rgba(56, 189, 248, 0.12);
+
+  /* node type accents */
+  --sensor: #34d399;
+  --movingAverage: #38bdf8;
+  --threshold: #fbbf24;
+  --alert: #f87171;
+
+  --radius: 10px;
+  --radius-sm: 6px;
+
+  font-family: 'Segoe UI', system-ui, Roboto, -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+}
+
+code {
+  font-family: 'Consolas', 'SF Mono', ui-monospace, monospace;
+}
+
+/* Basic nav/main styles from main */
+nav {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.nf-page {
+  padding: 2rem;
+}

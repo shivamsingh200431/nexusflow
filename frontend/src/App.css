@@ -1,0 +1,418 @@
+/* ============================================================
+   NexusFlow — Layout & Components
+   ============================================================ */
+
+.nf-app {
+  display: grid;
+  grid-template-rows: 56px 1fr;
+  height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ---- Navbar ------------------------------------------------ */
+.nf-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--panel-border);
+  gap: 16px;
+}
+
+.nf-navbar__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nf-navbar__title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.nf-navbar__subtitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.nf-navbar__actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ---- Buttons ----------------------------------------------- */
+.nf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.nf-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.nf-btn--primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.nf-btn--primary:hover {
+  background: #0ea5e9;
+}
+
+.nf-btn:not(.nf-btn--primary):not(.nf-btn--danger) {
+  background: var(--bg-raised);
+  color: var(--text);
+  border-color: var(--panel-border);
+}
+
+.nf-btn:not(.nf-btn--primary):not(.nf-btn--danger):hover {
+  background: var(--panel);
+  border-color: var(--accent);
+}
+
+.nf-btn--danger {
+  background: transparent;
+  color: var(--alert);
+  border-color: var(--alert);
+}
+
+.nf-btn--danger:hover {
+  background: rgba(248, 113, 113, 0.12);
+}
+
+/* ---- Main Layout ------------------------------------------- */
+.nf-main {
+  display: grid;
+  grid-template-columns: 220px 1fr 280px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ---- Sidebar (Palette / Config) ---------------------------- */
+.nf-sidebar {
+  background: var(--panel);
+  border-right: 1px solid var(--panel-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.nf-sidebar:last-child {
+  border-right: none;
+  border-left: 1px solid var(--panel-border);
+}
+
+.nf-sidebar__header {
+  padding: 14px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.nf-sidebar__list {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+/* ---- Palette Buttons --------------------------------------- */
+.nf-palette-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--bg-raised);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, transform 0.05s;
+  text-align: left;
+}
+
+.nf-palette-btn:hover {
+  background: var(--panel);
+  border-color: var(--accent);
+}
+
+.nf-palette-btn:active {
+  transform: scale(0.98);
+}
+
+.nf-palette-btn__icon {
+  font-size: 16px;
+}
+
+.nf-palette-btn--sensor { border-left: 3px solid var(--sensor); }
+.nf-palette-btn--movingAverage { border-left: 3px solid var(--movingAverage); }
+.nf-palette-btn--threshold { border-left: 3px solid var(--threshold); }
+.nf-palette-btn--alert { border-left: 3px solid var(--alert); }
+
+/* ---- Canvas ------------------------------------------------ */
+.nf-canvas {
+  width: 100%;
+  height: 100%;
+  background: var(--canvas-bg);
+  position: relative;
+}
+
+.nf-canvas .react-flow__viewport {
+  background: var(--canvas-bg);
+}
+
+/* React Flow handle overrides */
+.nf-handle {
+  background: var(--text-muted) !important;
+  border: 2px solid var(--canvas-bg) !important;
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.nf-handle:hover {
+  background: var(--accent) !important;
+  border-color: var(--canvas-bg) !important;
+  transform: scale(1.2);
+}
+
+.nf-handle.connecting {
+  background: var(--accent) !important;
+}
+
+.react-flow__edge-path {
+  stroke-width: 2 !important;
+}
+
+/* Edge colors by source node type */
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: 8 4;
+  animation: nf-dash 0.8s linear infinite;
+}
+
+@keyframes nf-dash {
+  to { stroke-dashoffset: -12; }
+}
+
+/* ---- Node Cards -------------------------------------------- */
+.nf-node {
+  width: 220px;
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  font-size: 12.5px;
+}
+
+.nf-node--sensor { border-top: 3px solid var(--sensor); }
+.nf-node--movingAverage { border-top: 3px solid var(--movingAverage); }
+.nf-node--threshold { border-top: 3px solid var(--threshold); }
+.nf-node--alert { border-top: 3px solid var(--alert); }
+
+.nf-node.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft), 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.nf-node__header {
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.nf-node__body {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nf-node__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.nf-node__label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.nf-node__value {
+  font-weight: 500;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.nf-node__expr {
+  justify-content: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.nf-node__op {
+  color: var(--threshold);
+  font-weight: 600;
+}
+
+.nf-node__unit {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.nf-node__badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.nf-node__badge--info {
+  background: rgba(56, 189, 248, 0.18);
+  color: var(--movingAverage);
+}
+
+.nf-node__badge--warning {
+  background: rgba(251, 191, 36, 0.18);
+  color: var(--threshold);
+}
+
+.nf-node__badge--critical {
+  background: rgba(248, 113, 113, 0.18);
+  color: var(--alert);
+}
+
+/* ---- Config Panel ------------------------------------------ */
+.nf-config__empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.nf-config__fields {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.nf-config__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.nf-config__label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.nf-config__input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--bg-raised);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.nf-config__input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.nf-config__input::placeholder {
+  color: var(--text-faint);
+}
+
+/* ---- Responsive -------------------------------------------- */
+@media (max-width: 1280px) {
+  .nf-main {
+    grid-template-columns: 200px 1fr 260px;
+  }
+  .nf-node { width: 200px; }
+}
+
+@media (max-width: 1024px) {
+  .nf-main {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+  }
+  .nf-sidebar {
+    border-right: none;
+    border-bottom: 1px solid var(--panel-border);
+    max-height: 200px;
+  }
+  .nf-sidebar:last-child {
+    border-left: none;
+    border-top: 1px solid var(--panel-border);
+    border-bottom: none;
+  }
+  .nf-sidebar__list { padding: 8px; }
+  .nf-canvas { min-height: 400px; }
+}
+
+@media (max-width: 640px) {
+  .nf-navbar { padding: 0 12px; }
+  .nf-navbar__subtitle { display: none; }
+  .nf-navbar__actions { gap: 6px; }
+  .nf-btn { padding: 6px 10px; font-size: 12px; }
+}
+
+/* Basic nav/main styles for main's page structure (non-React-Flow pages) */
+nav {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.nf-page {
+  padding: 2rem;
+}
