@@ -1,4 +1,4 @@
-import { Link, Route, Routes } from "react-router-dom";
+import { Link, Route, Routes, useLocation } from "react-router-dom";
 import { useState, useCallback } from 'react'
 import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
 import FlowCanvas from './components/FlowCanvas'
@@ -15,7 +15,7 @@ const INITIAL_NODES = [
     id: 'sensor-1',
     type: 'sensor',
     position: { x: 200, y: 80 },
-    data: { deviceId: 'TURBINE-01', metric: 'temperature' },
+    data: { deviceId: 'TURBINE-01' },
   },
   {
     id: 'movingAverage-1',
@@ -125,13 +125,18 @@ function FlowBuilder() {
 }
 
 function App() {
+  const location = useLocation()
+  const isFlowBuilder = location.pathname === '/flow-builder'
+
   return (
     <>
-      <nav>
-        <Link to="/">Dashboard</Link>{" "}
-        <Link to="/flow-builder">Flow Builder</Link>{" "}
-        <Link to="/devices">Devices</Link>
-      </nav>
+      {!isFlowBuilder && (
+        <nav>
+          <Link to="/">Dashboard</Link>{" "}
+          <Link to="/flow-builder">Flow Builder</Link>{" "}
+          <Link to="/devices">Devices</Link>
+        </nav>
+      )}
 
       <main>
         <Routes>

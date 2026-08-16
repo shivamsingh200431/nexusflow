@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 
 const NODE_TYPES = [
-  { type: 'sensor', label: 'Sensor', icon: '📡', tone: 'sensor', defaultData: { deviceId: 'DEVICE-01', metric: 'temperature' } },
+  { type: 'sensor', label: 'Sensor', icon: '📡', tone: 'sensor', defaultData: { deviceId: 'DEVICE-01' } },
   { type: 'movingAverage', label: 'Moving Average', icon: '📊', tone: 'movingAverage', defaultData: { metric: 'temperature', window: 5 } },
   { type: 'threshold', label: 'Threshold', icon: '🔍', tone: 'threshold', defaultData: { metric: 'temperature', operator: '>', value: 80 } },
   { type: 'alert', label: 'Alert', icon: '🚨', tone: 'alert', defaultData: { channel: 'mock-sms' } },

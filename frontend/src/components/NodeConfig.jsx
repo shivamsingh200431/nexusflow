@@ -11,7 +11,6 @@ const getDisplayName = (type) => {
 const CONFIG_FIELDS = {
   sensor: [
     { key: 'deviceId', label: 'Device ID', type: 'text' },
-    { key: 'metric', label: 'Metric', type: 'select', options: ['temperature', 'pressure', 'humidity', 'vibration', 'voltage', 'current'] },
   ],
   movingAverage: [
     { key: 'metric', label: 'Metric', type: 'select', options: ['temperature', 'pressure', 'humidity', 'vibration', 'voltage', 'current'] },
