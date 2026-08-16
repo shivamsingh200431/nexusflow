@@ -8,16 +8,7 @@ import ThresholdNode from './nodes/ThresholdNode'
 import AlertNode from './nodes/AlertNode'
 
 // V1 compiler supports only the linear chain: Sensor -> Moving Average -> Threshold -> Alert
-const ALLOWED_CONNECTIONS = {
-  sensor: ['movingAverage'],
-  movingAverage: ['threshold'],
-  threshold: ['alert'],
-}
 
-function isValidConnection(sourceType, targetType) {
-  const allowedTargets = ALLOWED_CONNECTIONS[sourceType]
-  return allowedTargets && allowedTargets.includes(targetType)
-}
 
 function SensorNodeWrapper({ data, ...rest }) {
   return (
@@ -63,14 +54,10 @@ const nodeTypesWithHandles = {
 export default function FlowCanvas({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, onPaneClick }) {
   const handleConnect = useCallback(
     (params) => {
-      const sourceNode = nodes.find((n) => n.id === params.source)
-      const targetNode = nodes.find((n) => n.id === params.target)
-      if (sourceNode && targetNode && isValidConnection(sourceNode.type, targetNode.type)) {
-        onConnect(params)
-      }
-    },
-    [nodes, onConnect]
-  )
+      onConnect(params)
+  },
+  [onConnect]
+)
 
   return (
     <div className="nf-canvas">
