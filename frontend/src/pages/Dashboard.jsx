@@ -1,5 +1,9 @@
 function Dashboard() {
-  return <h1>Dashboard</h1>;
+  return (
+    <div className="nf-page">
+      <h1>Dashboard</h1>
+    </div>
+  );
 }
 
 export default Dashboard;
