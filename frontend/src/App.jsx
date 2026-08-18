@@ -1,4 +1,4 @@
-import { NavLink, Route, Routes } from "react-router-dom"; // FIXED: was NavLinkLink
+import { NavLink, Route, Routes } from "react-router-dom";
 import { useState, useCallback } from 'react'
 import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
 import FlowCanvas from './components/FlowCanvas'

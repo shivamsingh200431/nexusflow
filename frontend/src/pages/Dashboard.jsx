@@ -187,7 +187,7 @@ function RulePipeline({ device, latest, telemetry }) {
       <pre className="graph-json">{JSON.stringify({
         nodes: [
           { id: "sensor-1", type: "sensor", data: { deviceId: device.deviceId, metric: "temperature" } },
-          { id: "average-1", type: "movingAverage", data: { metric: "temperature", window: 10 } },
+          { id: "average-1", type: "movingAverage", data: { metric: "temperature", window: 5 } },
           { id: "threshold-1", type: "threshold", data: { metric: "temperature", operator: ">", value: 80 } },
           { id: "alert-1", type: "alert", data: { channel: "mock-sms" } },
         ],
