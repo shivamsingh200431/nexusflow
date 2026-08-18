@@ -70,6 +70,12 @@ const navItems = ["Overview", "Devices", "Pipeline", "Telemetry", "Alerts"];
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
+function movingAverage(telemetry, metric, window = 5) {
+  const values = telemetry.slice(-window).map((point) => point.metrics[metric]).filter((v) => v != null);
+  if (!values.length) return null;
+  return values.reduce((sum, v) => sum + v, 0) / values.length;
+}
+
 function nextTelemetryPoint(previous, deviceId) {
   const now = new Date();
   const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
@@ -97,20 +103,24 @@ function formatValue(metric, value) {
   return Number(value).toFixed(1);
 }
 
-function MetricCard({ metric, value, selected, onClick }) {
+function MetricCard({ metric, value, selected, onClick, activeMetric }) { // <-- ADD activeMetric here
   const config = metricConfig[metric];
   return (
-    <button className={`metric-button ${selected ? "selected" : ""}`} onClick={onClick}>
+    <button className={`metric-button ${selected? "selected" : ""}`} onClick={onClick}>
       <article className="metric-card glass-card">
         <div className="metric-top">
-          <span className="metric-icon">{metric === "temperature" ? "°" : metric === "pressure" ? "P" : metric === "rpm" ? "R" : "V"}</span>
+          <span className="metric-icon">{metric === "temperature"? "°" : metric === "pressure"? "P" : metric === "rpm"? "R" : "V"}</span>
           <span className="live-pill"><StatusDot /> LIVE</span>
         </div>
         <div className="metric-label">{config.label}</div>
         <div className="metric-value">{formatValue(metric, value)}<span>{config.unit}</span></div>
-        <div className="metric-spark" aria-hidden="true">
-          {Array.from({ length: 7 }).map((_, index) => <i key={index} style={{ height: `${18 + ((index + Math.round(value || 0)) % 5) * 7}px` }} />)}
+
+        <div className={`metric-spark spark-${metric}`} aria-hidden="true">
+            {Array.from({ length: 7 }).map((_, index) =>
+            <i key={index} style={{ height: `${18 + ((index + Math.round(value || 0)) % 5) * 7}px` }} />
+          )}
         </div>
+
         <div className="metric-footer"><span>Streaming now</span><strong>Live telemetry</strong></div>
       </article>
     </button>
@@ -145,12 +155,13 @@ function FactoryVisualization({ device, telemetry }) {
   );
 }
 
-function RulePipeline({ device, latest }) {
+function RulePipeline({ device, latest, telemetry }) {
   const temp = latest.metrics.temperature;
-  const triggered = temp != null && temp > 80;
+  const avg = telemetry ? movingAverage(telemetry, "temperature", 5) : null;
+  const triggered = avg != null && avg > 80;
   const nodes = [
     { title: "Sensor", subtitle: device.deviceId, accent: "cyan", value: `${formatValue("temperature", temp)}°C`, icon: "◉" },
-    { title: "Moving Average", subtitle: "window: 10", accent: "violet", value: temp != null ? `${Math.min(temp + 0.3, 95).toFixed(1)}°C` : "—", icon: "≈" },
+    { title: "Moving Average", subtitle: "window: 5", accent: "violet", value: avg != null ? `${avg.toFixed(1)}°C` : "—", icon: "≈" },
     { title: "Threshold", subtitle: "temp > 80°C", accent: "orange", value: "> 80°C", icon: "⊘" },
     { title: "Alert", subtitle: "webhook action", accent: triggered ? "red" : "green", value: triggered ? "TRIGGERED" : "ARMED", icon: "!" },
   ];
@@ -304,8 +315,8 @@ function Navbar({ alertCount, devices, selectedId, currentView, onNavigate, onDe
         <button className="brand" onClick={() => navigate("Overview")}><div className="brand-mark"><span>N</span></div><strong>Nexus<span>Flow</span></strong></button>
         <nav>
           {navItems.map((item) => item === "Devices" ? (
-            <div className="nav-dropdown" key={item}>
-              <button className="nav-link" onClick={() => { onNavigate("Devices"); setDeviceMenuOpen((open) => !open); }}>{item} <span>⌄</span></button>
+            <div className="nav-dropdown" key={item} >
+              <button className="nav-link" onClick={() => { onNavigate("Devices"); setDeviceMenuOpen((open) => !open); }}>{item} <span style={{color:'black', fontSize:'15px'}}>⌄</span></button>
               {deviceMenuOpen && <div className="device-dropdown">{devices.map((device) => <button key={device.deviceId} onClick={() => { onDeviceSelect(device.deviceId); setDeviceMenuOpen(false); }}>{device.name}<small>{device.deviceId} · {device.status}</small></button>)}</div>}
             </div>
           ) : <button className={`nav-link ${currentView === item ? "active" : ""}`} onClick={() => navigate(item)} key={item}>{item}{item === "Alerts" && alertCount > 0 ? <b className="nav-badge">{alertCount}</b> : null}</button>)}
@@ -387,8 +398,20 @@ export default function Dashboard() {
         <div><span className="eyebrow">NEXUSFLOW / OPERATIONS CENTER</span><h1>{selectedDevice.name}, <em>in real time.</em></h1><p>Monitor live telemetry, visualize rules, and respond to machine anomalies before they become downtime.</p></div>
         <div className="system-health"><span className="health-orb"><i /></span><div><strong>{selectedDevice.name}</strong><span>{selectedDevice.deviceId} · {selectedDevice.location}</span></div></div>
       </section>
-      <div className="metric-grid">{metrics.map((metric) => <MetricCard key={metric} metric={metric} value={metric === "temperature" ? latest.metrics.temperature : selectedDevice.metrics[metric]} selected={activeMetric === metric} onClick={() => setActiveMetric(metric)} />)}</div>
-      <div className="main-grid"><FactoryVisualization device={selectedDevice} telemetry={selectedTelemetry} /><RulePipeline device={selectedDevice} latest={latest} /></div>
+      {/* <div className="metric-grid">{metrics.map((metric) => <MetricCard key={metric} metric={metric} value={metric === "temperature" ? latest.metrics.temperature : selectedDevice.metrics[metric]} selected={activeMetric === metric} onClick={() => setActiveMetric(metric)} />)}</div> */}
+      <div className="metric-grid">
+        {metrics.map((metric) =>
+          <MetricCard
+            key={metric}
+            metric={metric}
+            value={metric === "temperature"? latest.metrics.temperature : selectedDevice.metrics[metric]}
+            selected={activeMetric === metric}
+            onClick={() => setActiveMetric(metric)}
+            activeMetric={activeMetric} // <-- ADD THIS
+          />
+        )}
+      </div>
+      <div className="main-grid"><FactoryVisualization device={selectedDevice} telemetry={selectedTelemetry} /><RulePipeline device={selectedDevice} latest={latest} telemetry={selectedTelemetry} /></div>
       <section className="analytics-section" id="telemetry"><div className="section-heading analytics-title"><div><span className="eyebrow">LIVE TELEMETRY · {selectedDevice.deviceId}</span><h2>Machine performance</h2></div><div className="range-pills">{metrics.map((metric) => <button className={activeMetric === metric ? "active" : ""} onClick={() => setActiveMetric(metric)} key={metric}>{metricConfig[metric].label}</button>)}</div></div><div className="charts-grid"><TelemetryChart metric={activeMetric} telemetry={selectedTelemetry} /><AlertsView alerts={alerts.slice(0, 3)} onAcknowledge={acknowledgeAlert} onOpenDevice={openDevice} /></div></section>
       <section className="system-strip glass-card"><span><StatusDot /> Ingestion API</span><span><StatusDot /> Rule Engine</span><span><StatusDot /> WebSocket</span><span><StatusDot /> MongoDB Time-Series</span></section>
     </>
@@ -401,7 +424,7 @@ export default function Dashboard() {
       <div className="dashboard-content">
         {view === "Overview" && overviewContent}
         {view === "Devices" && <>{<DevicesView devices={devices} selectedId={selectedDeviceId} onSelect={openDevice} />}<DeviceDetail device={selectedDevice} telemetry={selectedTelemetry} alerts={alerts} onBack={() => navigate("Overview")} /></>}
-        {view === "Pipeline" && <RulePipeline device={selectedDevice} latest={latest} />}
+        {view === "Pipeline" && <RulePipeline device={selectedDevice} latest={latest} telemetry={selectedTelemetry} />}
         {view === "Telemetry" && <section className="page-card glass-card"><div className="page-title-row"><div><span className="eyebrow">LIVE TELEMETRY · {selectedDevice.deviceId}</span><h2>{selectedDevice.name} telemetry</h2><p>Temperature, pressure, RPM and vibration from the selected machine.</p></div><span className="fleet-live"><StatusDot /> LIVE</span></div><div className="detail-grid">{metrics.map((metric) => <TelemetryChart key={metric} metric={metric} telemetry={telemetry} />)}</div></section>}
         {view === "Alerts" && <AlertsView alerts={alerts} onAcknowledge={acknowledgeAlert} onOpenDevice={openDevice} />}
       </div>

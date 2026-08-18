@@ -1,7 +1,35 @@
 /* ============================================================
    NexusFlow — Layout & Components
    ============================================================ */
+.app-toplevel-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 20px 30px;
+  background: #081020;
+  border-bottom: 2px solid #512ffb;
+  font-family: Arial, sans-serif;
+}
 
+.app-toplevel-nav a {
+  color: #bec6d5;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.app-toplevel-nav a:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.app-toplevel-nav a.active {
+  background: #e0f2fe;
+  color: #0369a1;
+}
 .nf-app {
   display: grid;
   grid-template-rows: 56px 1fr;
@@ -415,4 +443,5 @@ nav {
 
 .nf-page {
   padding: 2rem;
+  color: black;
 }

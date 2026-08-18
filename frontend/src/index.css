@@ -1,6 +1,6 @@
 :root {
   /* NexusFlow dark theme */
-  --bg: #0b0f17;
+  --bg: #e2e8f0;
   --bg-raised: #111827;
   --panel: #141c2b;
   --panel-border: #22304a;
@@ -33,11 +33,15 @@
   box-sizing: border-box;
 }
 
+
 html,
 body,
 #root {
-  height: 100%;
   margin: 0;
+  min-height: 100%;
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 body {
