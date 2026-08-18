@@ -1,4 +1,4 @@
-import { Link, Route, Routes, useLocation } from "react-router-dom";
+import { NavLink, Route, Routes } from "react-router-dom";
 import { useState, useCallback } from 'react'
 import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
 import FlowCanvas from './components/FlowCanvas'
@@ -56,7 +56,7 @@ function FlowBuilder() {
   }, [setNodes])
 
   const handleUpdateNode = useCallback((id, data) => {
-    setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, data } : n)))
+    setNodes((prev) => prev.map((n) => (n.id === id? {...n, data } : n)))
   }, [setNodes])
 
   const handleConnect = useCallback((params) => {
@@ -125,26 +125,23 @@ function FlowBuilder() {
 }
 
 function App() {
-  const location = useLocation()
-  const isFlowBuilder = location.pathname === '/flow-builder'
-
   return (
     <>
-      {!isFlowBuilder && (
-        <nav>
-          <Link to="/">Dashboard</Link>{" "}
-          <Link to="/flow-builder">Flow Builder</Link>{" "}
-          <Link to="/devices">Devices</Link>
-        </nav>
-      )}
+      
+      <nav className="app-toplevel-nav">
+        <NavLink to="/" end>
+          Dashboard
+        </NavLink>
+        <NavLink to="/flow-builder">Flow Builder</NavLink>
+        <NavLink to="/devices">Devices</NavLink>
+      </nav>
 
-      <main>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/flow-builder" element={<FlowBuilder />} />
-          <Route path="/devices" element={<Devices />} />
-        </Routes>
-      </main>
+
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/flow-builder" element={<FlowBuilder />} />
+        <Route path="/devices" element={<Devices />} />
+      </Routes>
     </>
   )
 }
