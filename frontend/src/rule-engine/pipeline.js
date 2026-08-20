@@ -1,4 +1,7 @@
 import { compileFlowGraph } from './compileFlowGraph.js';
-import { exampleFlowGraph } from './exampleFlowGraph.js';
+import { fetchLatestFlow } from './flowApi.js';
 
-export const alerts$ = compileFlowGraph(exampleFlowGraph);
+export async function getAlertsStream() {
+  const flowGraph = await fetchLatestFlow();
+  return compileFlowGraph(flowGraph);
+}
