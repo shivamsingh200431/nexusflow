@@ -7,9 +7,9 @@ import NodeConfig from './components/NodeConfig'
 import Dashboard from './pages/Dashboard'
 import Devices from './pages/devices'
 import { getAlertsStream } from './rule-engine/pipeline.js'
+import { saveFlow, fetchLatestFlow } from './rule-engine/flowApi.js'
 import './App.css'
 
-const STORAGE_KEY = 'nexusflow-graph'
 
 const INITIAL_NODES = [
   {
@@ -72,19 +72,26 @@ function FlowBuilder() {
     [nodes, edges]
   )
 
-  const handleSave = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(serialize(), null, 2))
+  const handleSave = useCallback(async () => {
+    try {
+      await saveFlow(serialize())
+      alert('Flow saved successfully')
+    } catch (error) {
+      console.error('Failed to save flow:', error)
+      alert('Failed to save flow')
+    }
   }, [serialize])
 
-  const handleLoad = useCallback(() => {
+  const handleLoad = useCallback(async () => {
     try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY))
-      if (!saved) throw new Error('no saved flow')
+      const saved = await fetchLatestFlow()
       setNodes(saved.nodes || [])
       setEdges(saved.edges || [])
       setSelectedId(null)
-    } catch {
-      alert('No valid saved flow found')
+      alert('Latest flow loaded successfully')
+    } catch (error) {
+      console.error('Failed to load flow:', error)
+      alert('Failed to load flow')
     }
   }, [setNodes, setEdges])
 
