@@ -1,11 +1,12 @@
 import { NavLink, Route, Routes } from "react-router-dom";
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
 import FlowCanvas from './components/FlowCanvas'
 import NodePalette from './components/NodePalette'
 import NodeConfig from './components/NodeConfig'
 import Dashboard from './pages/Dashboard'
 import Devices from './pages/devices'
+import { getAlertsStream } from './rule-engine/pipeline.js'
 import './App.css'
 
 const STORAGE_KEY = 'nexusflow-graph'
@@ -56,7 +57,7 @@ function FlowBuilder() {
   }, [setNodes])
 
   const handleUpdateNode = useCallback((id, data) => {
-    setNodes((prev) => prev.map((n) => (n.id === id? {...n, data } : n)))
+    setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, data } : n)))
   }, [setNodes])
 
   const handleConnect = useCallback((params) => {
@@ -125,9 +126,26 @@ function FlowBuilder() {
 }
 
 function App() {
+  useEffect(() => {
+    let subscription;
+
+    getAlertsStream()
+      .then((alerts$) => {
+        subscription = alerts$.subscribe((alert) => {
+          console.log(alert);
+        });
+      })
+      .catch((err) => {
+        console.error('Rule engine failed to start:', err);
+      });
+
+    return () => {
+      if (subscription) subscription.unsubscribe();
+    };
+  }, []);
+
   return (
     <>
-      
       <nav className="app-toplevel-nav">
         <NavLink to="/" end>
           Dashboard
@@ -135,7 +153,6 @@ function App() {
         <NavLink to="/flow-builder">Flow Builder</NavLink>
         <NavLink to="/devices">Devices</NavLink>
       </nav>
-
 
       <Routes>
         <Route path="/" element={<Dashboard />} />
