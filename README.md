@@ -91,7 +91,7 @@ The current pipeline supports:
 
 Example rule:
 
-```text
+```
 Sensor
    ↓
 Moving Average
@@ -105,13 +105,13 @@ Alert
 
 ### Health
 
-```text
+```
 GET /api/health
 ```
 
 ### Devices
 
-```text
+```
 GET  /api/devices
 POST /api/devices
 GET  /api/devices/:id
@@ -119,7 +119,7 @@ GET  /api/devices/:id
 
 ### Telemetry
 
-```text
+```
 GET /api/telemetry
 POST /api/telemetry
 ```
@@ -128,13 +128,13 @@ Telemetry can be filtered by device and time range.
 
 Example:
 
-```text
+```
 GET /api/telemetry?deviceId=turbine-001
 ```
 
 ### Flows
 
-```text
+```
 GET  /api/flows
 POST /api/flows
 ```
@@ -151,13 +151,13 @@ Create a local `.env` file in the `frontend` directory.
 
 An example configuration is provided in:
 
-```text
+```
 frontend/.env.example
 ```
 
 ## Project Structure
 
-```text
+```
 nexusflow/
 ├── frontend/
 │   ├── src/
@@ -192,21 +192,23 @@ npm install
 npm run dev
 ```
 
+
 The backend runs on:
 
-```text
+
 http://localhost:5000
-```
+
 
 ### Frontend
 
 In another terminal:
 
-```bash
+bash
+
 cd frontend
 npm install
 npm run dev
-```
+
 
 The frontend runs on the Vite development server.
 
