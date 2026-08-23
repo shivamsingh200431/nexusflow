@@ -75,3 +75,32 @@ export const getFlows = async (req, res) => {
     });
   }
 };
+
+export const getFlowById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const flow = await Flow.findById(id).lean();
+
+    if (!flow) {
+      return res.status(404).json({
+        message: "Flow not found",
+      });
+    }
+
+    res.status(200).json({
+      flow,
+    });
+  } catch (error) {
+    console.error("Flow retrieval failed:", error.message);
+
+    if (error.name === 'CastError') {
+      return res.status(400).json({
+        message: "Invalid flow ID",
+      });
+    }
+
+    res.status(500).json({
+      message: "Failed to retrieve flow",
+    });
+  }
+};
