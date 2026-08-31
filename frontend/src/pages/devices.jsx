@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { fetchDevices, fetchDeviceTelemetry } from '../api/deviceApi.js';
+import { createLiveTelemetryConnection } from '../api/liveTelemetry.js';
 import './Devices.css';
 
 function DeviceSkeleton() {
@@ -165,6 +166,7 @@ function Devices() {
   const [telemetryError, setTelemetryError] = useState(null);
   
   const telemetryRequestRef = useRef(null);
+  const selectedDeviceRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -198,6 +200,44 @@ function Devices() {
     };
   }, []);
 
+useEffect(() => {
+  const connection = createLiveTelemetryConnection({
+    onTelemetry: (event) => {
+      setTelemetry((currentTelemetry) => {
+        const selected = selectedDeviceRef.current;
+
+        if (
+          !selected ||
+          event.deviceId !== selected.deviceId
+        ) {
+          return currentTelemetry;
+        }
+
+        const reading = {
+          _id: `live-${event.timestamp}-${event.deviceId}`,
+          timestamp: event.timestamp,
+          deviceId: event.deviceId,
+          metrics: event.data,
+        };
+
+        return [reading, ...currentTelemetry].slice(0, 100);
+      });
+    },
+
+    onError: (error) => {
+      console.error('Live telemetry connection failed:', error);
+    },
+
+    onClose: () => {
+      console.log('Live telemetry connection closed');
+    },
+  });
+
+  return () => {
+    connection.close();
+  };
+}, []);
+
   useEffect(() => {
     return () => {
       telemetryRequestRef.current?.abort();
@@ -209,8 +249,7 @@ function Devices() {
   };
 
   const handleSelectDevice = async (device) => {
-    // Cancel the previous telemetry request
-    telemetryRequestRef.current?.abort();
+    selectedDeviceRef.current = device;
 
     const controller = new AbortController();
     telemetryRequestRef.current = controller;
@@ -226,7 +265,22 @@ function Devices() {
         controller.signal
       );
 
-      setTelemetry(data.telemetry || []);
+    setTelemetry((currentTelemetry) => {
+      const history = data.telemetry || [];
+
+      const historyIds = new Set(
+      history.map((reading) => reading._id)
+      );
+
+      const liveReadings = currentTelemetry.filter(
+        (reading) =>
+          reading._id?.startsWith('live-') &&
+          !historyIds.has(reading._id)
+      );
+
+      return [...liveReadings, ...history].slice(0, 100);
+    });
+
     } catch (err) {
       // Aborted requests are expected when switching devices
       if (err.name === 'AbortError') {

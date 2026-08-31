@@ -1,5 +1,6 @@
 import Telemetry from "../models/Telemetry.js";
 import Device from "../models/Device.js";
+import { broadcastEvent } from "../websocket/server.js";
 
 export const createTelemetry = async (req, res) => {
   try {
@@ -23,6 +24,13 @@ export const createTelemetry = async (req, res) => {
       timestamp,
       deviceId,
       metrics,
+    });
+
+    broadcastEvent({
+      type: "telemetry",
+      timestamp: telemetry.timestamp.toISOString(),
+      deviceId: telemetry.deviceId,
+      data: telemetry.metrics,
     });
 
     res.status(201).json({
