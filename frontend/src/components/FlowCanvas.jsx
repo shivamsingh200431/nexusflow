@@ -1,5 +1,12 @@
-import { useCallback } from 'react'
-import { ReactFlow, Background, Controls, MiniMap, Handle, Position } from '@xyflow/react'
+import { useCallback, useMemo } from 'react'
+import {
+  ReactFlow,
+  Background,
+  Controls,
+  MiniMap,
+  Handle,
+  Position,
+} from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 
 import SensorNode from './nodes/SensorNode'
@@ -7,76 +14,186 @@ import MovingAverageNode from './nodes/MovingAverageNode'
 import ThresholdNode from './nodes/ThresholdNode'
 import AlertNode from './nodes/AlertNode'
 
-// V1 compiler supports only the linear chain: Sensor -> Moving Average -> Threshold -> Alert
-
-
 function SensorNodeWrapper({ data, ...rest }) {
   return (
-    <SensorNode data={data} {...rest}>
-      <Handle type="source" position={Position.Right} id="source" />
+    <SensorNode data={data ?? {}} {...rest}>
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="source"
+      />
     </SensorNode>
   )
 }
 
 function MovingAverageNodeWrapper({ data, ...rest }) {
   return (
-    <MovingAverageNode data={data} {...rest}>
-      <Handle type="target" position={Position.Left} id="target" />
-      <Handle type="source" position={Position.Right} id="source" />
+    <MovingAverageNode data={data ?? {}} {...rest}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="target"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="source"
+      />
     </MovingAverageNode>
   )
 }
 
 function ThresholdNodeWrapper({ data, ...rest }) {
   return (
-    <ThresholdNode data={data} {...rest}>
-      <Handle type="target" position={Position.Left} id="target" />
-      <Handle type="source" position={Position.Right} id="source" />
+    <ThresholdNode data={data ?? {}} {...rest}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="target"
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="source"
+      />
     </ThresholdNode>
   )
 }
 
 function AlertNodeWrapper({ data, ...rest }) {
   return (
-    <AlertNode data={data} {...rest}>
-      <Handle type="target" position={Position.Left} id="target" />
+    <AlertNode data={data ?? {}} {...rest}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="target"
+      />
     </AlertNode>
   )
 }
 
-const nodeTypesWithHandles = {
+const nodeTypes = {
   sensor: SensorNodeWrapper,
   movingAverage: MovingAverageNodeWrapper,
   threshold: ThresholdNodeWrapper,
   alert: AlertNodeWrapper,
 }
 
-export default function FlowCanvas({ nodes, edges, onNodesChange, onEdgesChange, onConnect, onNodeClick, onPaneClick }) {
+function normalizeNodes(nodes = []) {
+  return nodes
+    .filter((node) => node && node.id && node.type)
+    .map((node, index) => ({
+      ...node,
+
+      id: String(node.id),
+
+      type: node.type,
+
+      position: {
+        x:
+          typeof node.position?.x === 'number'
+            ? node.position.x
+            : 200,
+
+        y:
+          typeof node.position?.y === 'number'
+            ? node.position.y
+            : 80 + index * 180,
+      },
+
+      data: node.data ?? {},
+    }))
+}
+
+function normalizeEdges(edges = []) {
+  return edges
+    .filter(
+      (edge) =>
+        edge &&
+        edge.source &&
+        edge.target
+    )
+    .map((edge, index) => ({
+      ...edge,
+
+      id:
+        edge.id ??
+        `edge-${index + 1}`,
+
+      source: String(edge.source),
+      target: String(edge.target),
+    }))
+}
+
+export default function FlowCanvas({
+  nodes,
+  edges,
+  onNodesChange,
+  onEdgesChange,
+  onConnect,
+  onNodeClick,
+  onPaneClick,
+}) {
+  const safeNodes = useMemo(
+    () => normalizeNodes(nodes),
+    [nodes]
+  )
+
+  const safeEdges = useMemo(
+    () => normalizeEdges(edges),
+    [edges]
+  )
+
   const handleConnect = useCallback(
     (params) => {
       onConnect(params)
-  },
-  [onConnect]
-)
+    },
+    [onConnect]
+  )
 
   return (
     <div className="nf-canvas">
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
+        nodes={safeNodes}
+        edges={safeEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={handleConnect}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
-        nodeTypes={nodeTypesWithHandles}
+        nodeTypes={nodeTypes}
         fitView
-        proOptions={{ hideAttribution: true }}
+        proOptions={{
+          hideAttribution: true,
+        }}
       >
-        <Background color="#1a2639" gap={16} />
+        <Background
+          color="#1a2639"
+          gap={16}
+        />
+
         <Controls />
+
         <MiniMap
-          nodeColor={(n) => (n.type === 'sensor' ? '#34d399' : n.type === 'movingAverage' ? '#38bdf8' : n.type === 'threshold' ? '#fbbf24' : '#f87171')}
+          nodeColor={(node) => {
+            if (node.type === 'sensor') {
+              return '#34d399'
+            }
+
+            if (node.type === 'movingAverage') {
+              return '#38bdf8'
+            }
+
+            if (node.type === 'threshold') {
+              return '#fbbf24'
+            }
+
+            if (node.type === 'alert') {
+              return '#f87171'
+            }
+
+            return '#64748b'
+          }}
           maskColor="rgba(11, 15, 23, 0.7)"
         />
       </ReactFlow>

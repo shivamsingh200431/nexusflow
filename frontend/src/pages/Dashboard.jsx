@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAlerts } from "../alerts/useAlerts.js";
 import {
   Area,
   AreaChart,
@@ -341,6 +342,12 @@ export default function Dashboard() {
   const [telemetry, setTelemetry] = useState(seedTelemetry);
   const [devices, setDevices] = useState(deviceSeed);
   const [alerts, setAlerts] = useState(alertSeed);
+  const ruleEngineAlerts = useAlerts();
+
+const displayedAlerts = useMemo(
+  () => [...ruleEngineAlerts, ...alerts],
+  [ruleEngineAlerts, alerts]
+);
 
   const selectedDevice = devices.find((device) => device.deviceId === selectedDeviceId) || devices[0];
   const selectedTelemetry = useMemo(() => {

@@ -1,13 +1,13 @@
 import { NavLink, Route, Routes } from "react-router-dom";
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { useNodesState, useEdgesState, addEdge } from '@xyflow/react'
 import FlowCanvas from './components/FlowCanvas'
 import NodePalette from './components/NodePalette'
 import NodeConfig from './components/NodeConfig'
 import Dashboard from './pages/Dashboard'
 import Devices from './pages/devices'
-import { getAlertsStream } from './rule-engine/pipeline.js'
 import './App.css'
+import { AlertsProvider } from './alerts/AlertsProvider.jsx'
 
 const STORAGE_KEY = 'nexusflow-graph'
 
@@ -72,27 +72,94 @@ function FlowBuilder() {
     [nodes, edges]
   )
 
-  const handleSave = useCallback(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(serialize(), null, 2))
-  }, [serialize])
+  const handleSave = useCallback(async () => {
+  try {
+    const flow = serialize()
 
-  const handleLoad = useCallback(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY))
-      if (!saved) throw new Error('no saved flow')
-      setNodes(saved.nodes || [])
-      setEdges(saved.edges || [])
-      setSelectedId(null)
-    } catch {
-      alert('No valid saved flow found')
+    console.log("SAVING FLOW:", flow)
+
+    const response = await fetch("http://localhost:5000/api/flows", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(flow),
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
     }
-  }, [setNodes, setEdges])
 
-  const handleClear = useCallback(() => {
-    setNodes([])
-    setEdges([])
-    setSelectedId(null)
-  }, [setNodes, setEdges])
+    const result = await response.json()
+
+    console.log("FLOW SAVED:", result)
+
+    alert("Flow saved successfully")
+  } catch (error) {
+    console.error("Save flow failed:", error)
+    alert("Failed to save flow")
+  }
+}, [serialize])
+
+  const handleLoad = useCallback(async () => {
+  console.log("LOAD BUTTON CLICKED");
+
+  try {
+    const response = await fetch("http://localhost:5000/api/flows");
+
+    console.log("API RESPONSE:", response.status);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    console.log("FLOWS RECEIVED:", result);
+
+    if (!result.flows?.length) {
+      throw new Error("No flows found");
+    }
+
+   const saved = result.flows[0]
+   console.log("LATEST FLOW SELECTED:", saved)
+
+    console.log("LOADING FLOW:", saved);
+
+    const loadedNodes = (saved.nodes || []).map((node, index) => ({
+      id: node.id,
+      type: node.type,
+      position: node.position || {
+        x: 200,
+        y: 80 + index * 180,
+      },
+      data: node.data || {},
+    }));
+
+    const loadedEdges = (saved.edges || []).map((edge, index) => ({
+      id: edge.id || `edge-${index + 1}`,
+      source: edge.source,
+      target: edge.target,
+    }));
+
+    console.log("LOADED NODES:", loadedNodes);
+    console.log("LOADED EDGES:", loadedEdges);
+
+    setNodes(loadedNodes);
+    setEdges(loadedEdges);
+    setSelectedId(null);
+
+    console.log("FLOW LOADED SUCCESSFULLY");
+  } catch (error) {
+    console.error("LOAD FAILED:", error);
+  }
+}, [setNodes, setEdges]);
+
+const handleClear = useCallback(() => {
+  setNodes([]);
+  setEdges([]);
+  setSelectedId(null);
+}, [setNodes, setEdges]);
 
   return (
     <div className="nf-app">
@@ -126,25 +193,9 @@ function FlowBuilder() {
 }
 
 function App() {
-  useEffect(() => {
-    let subscription;
-
-    getAlertsStream()
-      .then((alerts$) => {
-        subscription = alerts$.subscribe((alert) => {
-          console.log(alert);
-        });
-      })
-      .catch((err) => {
-        console.error('Rule engine failed to start:', err);
-      });
-
-    return () => {
-      if (subscription) subscription.unsubscribe();
-    };
-  }, []);
-
+  
   return (
+    <AlertsProvider>
     <>
       <nav className="app-toplevel-nav">
         <NavLink to="/" end>
@@ -160,6 +211,7 @@ function App() {
         <Route path="/devices" element={<Devices />} />
       </Routes>
     </>
+    </AlertsProvider>
   )
 }
 
