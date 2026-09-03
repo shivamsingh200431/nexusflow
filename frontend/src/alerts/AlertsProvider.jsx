@@ -1,35 +1,39 @@
-import { createContext, useEffect, useState } from 'react';
-import {
-  startRuleEngine,
-  stopRuleEngine,
-  onAlert,
-} from '../rule-engine/alertService.js';
+import { useEffect, useSyncExternalStore } from 'react';
+import { AlertsContext } from './alertsContext.js';
+import { alertStore } from './alertStore.js';
+import { acquireRuleEngine } from '../rule-engine/alertService.js';
 
-export const AlertsContext = createContext(null);
+export function AlertsProvider({ children, store = alertStore }) {
+  const snapshot = useSyncExternalStore(
+    store.subscribe,
+    store.getSnapshot,
+    store.getSnapshot
+  );
 
-export function AlertsProvider({ children }) {
-  const [alerts, setAlerts] = useState([]);
+ useEffect(() => {
+  const release = acquireRuleEngine({
+    onAlert: (alert) => {
+      store.ingest(alert);
+    },
 
-  useEffect(() => {
-    let mounted = true;
+    onStatusChange: (status) => {
+      store.setStatus(status);
+    },
+  });
 
-    const unsubscribe = onAlert((alert) => {
-      if (!mounted) return;
+  return release;
+}, [store]);
 
-      setAlerts((current) => [alert, ...current]);
-    });
-    
-    startRuleEngine();
-
-    return () => {
-      mounted = false;
-      unsubscribe();
-      stopRuleEngine();
-    };
-  }, []);
+  const value = {
+    ...snapshot,
+    actions: {
+      acknowledge: store.acknowledge,
+      clear: store.clear,
+    },
+  };
 
   return (
-    <AlertsContext.Provider value={alerts}>
+    <AlertsContext.Provider value={value}>
       {children}
     </AlertsContext.Provider>
   );
