@@ -3,14 +3,14 @@
  *
  * Rendered with `react-dom/server`, which needs no DOM and no extra test
  * dependency. Effects do not run during a server render, so this covers the
- * snapshot / context plumbing only - the subscription lifecycle it sets up is
- * covered directly in ../rule-engine/alertService.test.js.
+ * snapshot / context plumbing only - the subscription lifecycle it sets up
+ * is covered directly in ../rule-engine/alertService.test.js.
  */
 
 import { describe, it, expect, vi } from 'vitest';
 import { renderToString } from 'react-dom/server';
 import { AlertsProvider } from './AlertsProvider.jsx';
-import { useAlerts } from './useAlerts.js';
+import { useAlerts, useAlertActions } from './useAlerts.js';
 import { createAlertStore } from './alertStore.js';
 
 function alertEvent() {
@@ -33,8 +33,15 @@ function Probe({ onRender }) {
   return <span>{alerts.length} alerts</span>;
 }
 
-describe('alerts context', () => {
+function ActionsProbe({ onRender }) {
+  const actions = useAlertActions();
 
+  onRender(actions);
+
+  return <span>actions</span>;
+}
+
+describe('alerts context', () => {
   it('exposes the store snapshot and the actions to the tree', () => {
     const store = createAlertStore();
 
@@ -49,12 +56,26 @@ describe('alerts context', () => {
       </AlertsProvider>
     );
 
-expect(html).toContain('alerts');
+    expect(html).toContain('alerts');
     // The array is handed over as-is, not copied per render.
     expect(seen.alerts).toBe(store.getSnapshot().alerts);
     expect(seen.status).toEqual({ state: 'running', error: null });
     expect(seen.actions.acknowledge).toBe(store.acknowledge);
     expect(seen.actions.clear).toBe(store.clear);
+  });
+
+  it('exposes alert actions through the dedicated hook', () => {
+    const store = createAlertStore();
+    let seen = null;
+
+    renderToString(
+      <AlertsProvider store={store}>
+        <ActionsProbe onRender={(value) => { seen = value; }} />
+      </AlertsProvider>
+    );
+
+    expect(seen.acknowledge).toBe(store.acknowledge);
+    expect(seen.clear).toBe(store.clear);
   });
 
   it('fails loudly when a hook is used outside the provider', () => {
@@ -66,5 +87,4 @@ expect(html).toContain('alerts');
 
     consoleError.mockRestore();
   });
-
 });
