@@ -20,7 +20,13 @@ export function useAlertsStatus() {
 }
 
 export function useAlertActions() {
-  const { acknowledge, clear } = useAlertsContext('useAlertActions');
+  const { actions } = useAlertsContext('useAlertActions');
 
-  return useMemo(() => ({ acknowledge, clear }), [acknowledge, clear]);
+  return useMemo(
+    () => ({
+      acknowledge: actions.acknowledge,
+      clear: actions.clear,
+    }),
+    [actions.acknowledge, actions.clear]
+  );
 }
