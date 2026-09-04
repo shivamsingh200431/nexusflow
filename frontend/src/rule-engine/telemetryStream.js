@@ -3,14 +3,19 @@ import { Observable } from 'rxjs';
 const API_BASE =
   import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
-export function telemetry$() {
+export function telemetry$(deviceId) {
   return new Observable((subscriber) => {
     let stopped = false;
     let lastTelemetryId = null;
 
     const poll = async () => {
       try {
-        const response = await fetch(`${API_BASE}/telemetry`);
+        const url = deviceId
+          ? `${API_BASE}/telemetry?deviceId=${encodeURIComponent(deviceId)}`
+          : `${API_BASE}/telemetry`;
+
+        const response = await fetch(url);
+
         if (!response.ok) {
           throw new Error(`Telemetry API returned ${response.status}`);
         }

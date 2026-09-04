@@ -1,4 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('./telemetryStream.js', () => ({
+  telemetry$: vi.fn(() => ({
+    pipe: vi.fn(() => ({
+      subscribe: vi.fn(),
+    })),
+  })),
+}));
+
+import { telemetry$ } from './telemetryStream.js';
 import { compileFlowGraph } from './compileFlowGraph.js';
 
 describe('compileFlowGraph', () => {
@@ -66,6 +76,25 @@ describe('compileFlowGraph', () => {
     expect(pipeline$).toBeDefined();
     expect(typeof pipeline$.subscribe).toBe('function');
   });
+
+  it('passes the sensor deviceId to telemetry$', () => {
+  const flowGraph = {
+    nodes: [
+      {
+        id: 'sensor-1',
+        type: 'sensor',
+        data: {
+          deviceId: 'turbine-002',
+        },
+      },
+    ],
+    edges: [],
+  };
+
+  compileFlowGraph(flowGraph);
+
+  expect(telemetry$).toHaveBeenCalledWith('turbine-002');
+});
 
   it('compiles a sensor to threshold graph', () => {
     const flowGraph = {

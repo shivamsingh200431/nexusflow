@@ -52,5 +52,5 @@ export function compileFlowGraph(flowGraph) {
     .filter((node) => node && node.type !== 'sensor')
     .map((node) => buildOperator(node, context));
 
-  return telemetry$().pipe(...operators);
+  return telemetry$(sensorNode.data?.deviceId).pipe(...operators);
 }
