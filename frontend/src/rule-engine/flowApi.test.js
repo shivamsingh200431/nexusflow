@@ -2,14 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { fetchLatestFlow } from './flowApi.js';
 
 describe('fetchLatestFlow', () => {
-  const originalFetch = global.fetch;
+  const originalFetch = globalThis.fetch;
 
   beforeEach(() => {
-    global.fetch = vi.fn();
+    globalThis.fetch = vi.fn();
   });
 
   afterEach(() => {
-    global.fetch = originalFetch;
+    globalThis.fetch = originalFetch;
     vi.restoreAllMocks();
   });
 
@@ -50,16 +50,16 @@ describe('fetchLatestFlow', () => {
       ],
     };
 
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       json: async () => responseData,
     });
 
     const result = await fetchLatestFlow();
 
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
 
-    expect(global.fetch).toHaveBeenCalledWith(
+    expect(globalThis.fetch).toHaveBeenCalledWith(
       'http://localhost:5000/api/flows'
     );
 
@@ -70,7 +70,7 @@ describe('fetchLatestFlow', () => {
   });
 
   it('throws an error when the backend returns a failed response', async () => {
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: false,
       status: 500,
     });
@@ -81,7 +81,7 @@ describe('fetchLatestFlow', () => {
   });
 
   it('throws an error when no flows are returned', async () => {
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       json: async () => ({
         flows: [],
@@ -94,7 +94,7 @@ describe('fetchLatestFlow', () => {
   });
 
   it('throws an error when the flows property is missing', async () => {
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       json: async () => ({}),
     });
@@ -105,7 +105,7 @@ describe('fetchLatestFlow', () => {
   });
 
   it('returns only nodes and edges from the latest flow', async () => {
-    global.fetch.mockResolvedValue({
+    globalThis.fetch.mockResolvedValue({
       ok: true,
       json: async () => ({
         flows: [

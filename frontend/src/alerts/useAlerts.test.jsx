@@ -10,7 +10,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderToString } from 'react-dom/server';
 import { AlertsProvider } from './AlertsProvider.jsx';
-import { useAlerts, useAlertsStatus, useAlertActions } from './useAlerts.js';
+import { useAlerts } from './useAlerts.js';
 import { createAlertStore } from './alertStore.js';
 
 function alertEvent() {
