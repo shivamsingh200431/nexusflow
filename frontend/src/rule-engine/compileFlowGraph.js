@@ -11,7 +11,7 @@ function buildOperator(node, context) {
       return movingAverage(data.metric, data.window);
       
     case 'threshold':
-      // Store threshold node details under its specific ID to avoid collisions
+      // Store the latest threshold configuration for the following alert node.
       context.lastThreshold = data;
       return checkThreshold(data.operator, data.value);
       

@@ -14,6 +14,7 @@ let status = {
 };
 
 let stoppedDuringStartup = false;
+let restartRequested = false;
 
 export function configureRuleEngine({ streamSource: source } = {}) {
   if (source) {
@@ -67,6 +68,10 @@ export function startRuleEngine() {
   }
 
   if (startingPromise) {
+    if (stoppedDuringStartup) {
+      restartRequested = true;
+    }
+
     return startingPromise;
   }
 
@@ -79,7 +84,7 @@ export function startRuleEngine() {
 
   notifyStatus();
 
-  startingPromise = Promise.resolve()
+  const startupPromise = Promise.resolve()
     .then(() => streamSource())
     .then((alerts$) => {
       if (stoppedDuringStartup) {
@@ -89,6 +94,17 @@ export function startRuleEngine() {
         };
 
         notifyStatus();
+
+        if (restartRequested) {
+          restartRequested = false;
+          stoppedDuringStartup = false;
+
+          // Allow the completed startup to be replaced by a fresh one.
+          startingPromise = null;
+
+          return startRuleEngine();
+        }
+
         return status;
       }
 
@@ -139,10 +155,14 @@ export function startRuleEngine() {
       return status;
     })
     .finally(() => {
-      startingPromise = null;
+      if (startingPromise === startupPromise) {
+        startingPromise = null;
+      }
     });
 
-  return startingPromise;
+  startingPromise = startupPromise;
+
+  return startupPromise;
 }
 
 export function stopRuleEngine() {
@@ -153,7 +173,9 @@ export function stopRuleEngine() {
     subscription = null;
   }
 
-  startingPromise = null;
+  if (!startingPromise) {
+    restartRequested = false;
+  }
 
   consumers.clear();
 
@@ -187,9 +209,9 @@ export function acquireRuleEngine({
 
   const startPromise = startRuleEngine();
 
-startPromise.catch((error) => {
-  console.error('Failed to start rule engine:', error);
-});
+  startPromise.catch((error) => {
+    console.error('Failed to start rule engine:', error);
+  });
 
   let released = false;
 
@@ -211,8 +233,16 @@ export function restartRuleEngine() {
     subscription = null;
   }
 
+  if (startingPromise) {
+    stoppedDuringStartup = true;
+    restartRequested = true;
+
+    return startingPromise;
+  }
+
   startingPromise = null;
   stoppedDuringStartup = false;
+  restartRequested = false;
 
   status = {
     state: 'idle',
@@ -246,6 +276,7 @@ export function _resetForTests() {
   streamSource = getAlertsStream;
 
   stoppedDuringStartup = false;
+  restartRequested = false;
 
   status = {
     state: 'idle',

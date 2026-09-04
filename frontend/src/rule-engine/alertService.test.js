@@ -139,17 +139,27 @@ function createFakeAlertStream() {
   const state = {
     subscribeCount: 0,
     unsubscribeCount: 0,
+
     get active() {
       return subscribers.size;
     },
+
     emit(alert) {
-      for (const subscriber of [...subscribers]) subscriber.next(alert);
+      for (const subscriber of [...subscribers]) {
+        subscriber.next(alert);
+      }
     },
+
     fail(error) {
-      for (const subscriber of [...subscribers]) subscriber.error(error);
+      for (const subscriber of [...subscribers]) {
+        subscriber.error(error);
+      }
     },
+
     finish() {
-      for (const subscriber of [...subscribers]) subscriber.complete();
+      for (const subscriber of [...subscribers]) {
+        subscriber.complete();
+      }
     },
   };
 
@@ -180,15 +190,21 @@ function createDeferred() {
 }
 
 describe('alertService lifecycle', () => {
-
   let fake;
   let consoleError;
 
   beforeEach(() => {
     _resetForTests();
+
     fake = createFakeAlertStream();
-    consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-    configureRuleEngine({ streamSource: () => Promise.resolve(fake.stream) });
+
+    consoleError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
+
+    configureRuleEngine({
+      streamSource: () => Promise.resolve(fake.stream),
+    });
   });
 
   afterEach(() => {
@@ -213,7 +229,9 @@ describe('alertService lifecycle', () => {
   it('never subscribes if it is stopped while the stream is still compiling', async () => {
     const deferred = createDeferred();
 
-    configureRuleEngine({ streamSource: () => deferred.promise });
+    configureRuleEngine({
+      streamSource: () => deferred.promise,
+    });
 
     const starting = startRuleEngine();
 
@@ -231,6 +249,69 @@ describe('alertService lifecycle', () => {
     expect(getRuleEngineStatus().state).toBe('idle');
   });
 
+  it('restarts when a new consumer starts the engine after stop during startup', async () => {
+    const deferred = createDeferred();
+    const restartedStream = createFakeAlertStream();
+
+    const streamSource = vi
+      .fn()
+      .mockReturnValueOnce(deferred.promise)
+      .mockResolvedValueOnce(restartedStream.stream);
+
+    configureRuleEngine({ streamSource });
+
+    const received = [];
+
+    acquireRuleEngine({
+      onAlert: (alert) => {
+        received.push(alert);
+      },
+    });
+
+    const starting = startRuleEngine();
+
+    expect(getRuleEngineStatus().state).toBe('starting');
+
+    // Stop while the first stream is still being built.
+    stopRuleEngine();
+
+    // A new consumer arrives before the original startup has finished.
+    const release = acquireRuleEngine({
+      onAlert: (alert) => {
+        received.push(alert);
+      },
+    });
+
+    const restarted = startRuleEngine();
+
+    // Both calls are waiting on the same original startup.
+    expect(restarted).toBe(starting);
+
+    // Finish the original startup. It must NOT subscribe to that stream.
+    deferred.resolve(fake.stream);
+
+    await restarted;
+
+    // The service must create a fresh stream for the new consumer.
+    expect(streamSource).toHaveBeenCalledTimes(2);
+    expect(fake.subscribeCount).toBe(0);
+    expect(restartedStream.subscribeCount).toBe(1);
+    expect(restartedStream.active).toBe(1);
+    expect(getRuleEngineStatus().state).toBe('running');
+
+    const fakeAlert = {
+      type: 'alert',
+      deviceId: 'turbine-001',
+      ruleId: 'threshold-1',
+    };
+
+    restartedStream.emit(fakeAlert);
+
+    expect(received).toEqual([fakeAlert]);
+
+    release();
+  });
+
   it('starts once for many consumers and stops when the last one releases', async () => {
     const first = acquireRuleEngine({ onAlert: vi.fn() });
     const second = acquireRuleEngine({ onAlert: vi.fn() });
@@ -243,6 +324,7 @@ describe('alertService lifecycle', () => {
     first();
 
     expect(getRuleEngineRefCount()).toBe(1);
+
     // One consumer left, so the stream must stay open.
     expect(fake.active).toBe(1);
 
@@ -289,6 +371,7 @@ describe('alertService lifecycle', () => {
     expect(fake.subscribeCount).toBe(2);
     expect(fake.unsubscribeCount).toBe(1);
     expect(fake.active).toBe(1);
+
     // Ref counts survive a restart, so the consumer stays registered.
     expect(getRuleEngineRefCount()).toBe(1);
     expect(getRuleEngineStatus().state).toBe('running');
@@ -315,11 +398,21 @@ describe('alertService lifecycle', () => {
 
     fake.fail(failure);
 
-    expect(getRuleEngineStatus()).toEqual({ state: 'error', error: failure });
+    expect(getRuleEngineStatus()).toEqual({
+      state: 'error',
+      error: failure,
+    });
+
     expect(fake.active).toBe(0);
+
     // A late consumer is told where the engine already is, hence the leading
     // 'idle' before the transitions.
-    expect(statuses).toEqual(['idle', 'starting', 'running', 'error']);
+    expect(statuses).toEqual([
+      'idle',
+      'starting',
+      'running',
+      'error',
+    ]);
 
     await restartRuleEngine();
 
@@ -332,7 +425,9 @@ describe('alertService lifecycle', () => {
   it('resolves instead of rejecting when the stream cannot be built', async () => {
     const failure = new Error('flow fetch failed');
 
-    configureRuleEngine({ streamSource: () => Promise.reject(failure) });
+    configureRuleEngine({
+      streamSource: () => Promise.reject(failure),
+    });
 
     // An unhandled rejection here would escape from inside a React effect.
     await expect(startRuleEngine()).resolves.toEqual({
@@ -351,6 +446,7 @@ describe('alertService lifecycle', () => {
         throw new Error('consumer blew up');
       },
     });
+
     const releaseHealthy = acquireRuleEngine({
       onAlert: (alert) => healthy.push(alert.ruleId),
     });
@@ -374,6 +470,7 @@ describe('alertService lifecycle', () => {
     await startRuleEngine();
 
     const seen = [];
+
     const late = acquireRuleEngine({
       onStatusChange: (next) => seen.push(next.state),
     });
@@ -400,5 +497,4 @@ describe('alertService lifecycle', () => {
 
     expect(getRuleEngineRefCount()).toBe(0);
   });
-
 });
