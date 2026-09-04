@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAlerts } from "../alerts/useAlerts.js";
 import {
   Area,
   AreaChart,
@@ -103,7 +104,7 @@ function formatValue(metric, value) {
   return Number(value).toFixed(1);
 }
 
-function MetricCard({ metric, value, selected, onClick, activeMetric }) { // <-- ADD activeMetric here
+function MetricCard({ metric, value, selected, onClick }) { // <-- ADD activeMetric here
   const config = metricConfig[metric];
   return (
     <button className={`metric-button ${selected? "selected" : ""}`} onClick={onClick}>
@@ -341,6 +342,12 @@ export default function Dashboard() {
   const [telemetry, setTelemetry] = useState(seedTelemetry);
   const [devices, setDevices] = useState(deviceSeed);
   const [alerts, setAlerts] = useState(alertSeed);
+  const { alerts: ruleEngineAlerts, actions: alertActions } = useAlerts();
+
+  const displayedAlerts = useMemo(
+  () => [...ruleEngineAlerts, ...alerts],
+  [ruleEngineAlerts, alerts]
+  );
 
   const selectedDevice = devices.find((device) => device.deviceId === selectedDeviceId) || devices[0];
   const selectedTelemetry = useMemo(() => {
@@ -359,7 +366,9 @@ export default function Dashboard() {
     }));
   }, [selectedDevice, telemetry]);
   const latest = selectedTelemetry[selectedTelemetry.length - 1];
-  const activeAlerts = alerts.filter((alert) => !alert.acknowledged).length;
+  const activeAlerts = displayedAlerts.filter(
+    (alert) => !alert.acknowledged
+  ).length;
   const metrics = useMemo(() => Object.keys(metricConfig), []);
 
   useEffect(() => {
@@ -384,12 +393,26 @@ export default function Dashboard() {
     return () => window.clearInterval(interval);
   }, []);
 
-  useEffect(() => {
-    setDevices((current) => current.map((device) => device.deviceId === "turbine-001" ? { ...device, metrics: latest.metrics } : device));
-  }, [latest]);
-
   const openDevice = useCallback((deviceId) => { setSelectedDeviceId(deviceId); setView("Devices"); window.scrollTo({ top: 0, behavior: "smooth" }); }, []);
-  const acknowledgeAlert = useCallback((id) => setAlerts((current) => current.map((alert) => alert.id === id ? { ...alert, acknowledged: true } : alert)), []);
+  const acknowledgeAlert = useCallback(
+    (id) => {
+      const liveAlert = ruleEngineAlerts.find((alert) => alert.id === id);
+
+      if (liveAlert) {
+        alertActions.acknowledge(id);
+        return;
+      }
+
+      setAlerts((current) =>
+        current.map((alert) =>
+          alert.id === id
+            ? { ...alert, acknowledged: true }
+            : alert
+        )
+      );
+  },
+  [ruleEngineAlerts, alertActions]
+  );
   const navigate = useCallback((nextView) => { setView(nextView); window.scrollTo({ top: 0, behavior: "smooth" }); }, []);
 
   const overviewContent = (
@@ -406,13 +429,19 @@ export default function Dashboard() {
             metric={metric}
             value={metric === "temperature"? latest.metrics.temperature : selectedDevice.metrics[metric]}
             selected={activeMetric === metric}
-            onClick={() => setActiveMetric(metric)}
-            activeMetric={activeMetric} // <-- ADD THIS
+            onClick={()=>setActiveMetric(metric)}
           />
         )}
       </div>
       <div className="main-grid"><FactoryVisualization device={selectedDevice} telemetry={selectedTelemetry} /><RulePipeline device={selectedDevice} latest={latest} telemetry={selectedTelemetry} /></div>
-      <section className="analytics-section" id="telemetry"><div className="section-heading analytics-title"><div><span className="eyebrow">LIVE TELEMETRY · {selectedDevice.deviceId}</span><h2>Machine performance</h2></div><div className="range-pills">{metrics.map((metric) => <button className={activeMetric === metric ? "active" : ""} onClick={() => setActiveMetric(metric)} key={metric}>{metricConfig[metric].label}</button>)}</div></div><div className="charts-grid"><TelemetryChart metric={activeMetric} telemetry={selectedTelemetry} /><AlertsView alerts={alerts.slice(0, 3)} onAcknowledge={acknowledgeAlert} onOpenDevice={openDevice} /></div></section>
+      <section className="analytics-section" id="telemetry"><div className="section-heading analytics-title"><div><span className="eyebrow">LIVE TELEMETRY · {selectedDevice.deviceId}</span><h2>Machine performance</h2></div><div className="range-pills">{metrics.map((metric) => <button className={activeMetric === metric ? "active" : ""} onClick={() => setActiveMetric(metric)} key={metric}>{metricConfig[metric].label}</button>)}</div></div><div className="charts-grid"><TelemetryChart metric={activeMetric} telemetry={selectedTelemetry} />
+      <AlertsView
+        alerts={displayedAlerts.slice(0, 3)}
+        onAcknowledge={acknowledgeAlert}
+        onOpenDevice={openDevice}
+        />
+      </div>
+    </section>
       <section className="system-strip glass-card"><span><StatusDot /> Ingestion API</span><span><StatusDot /> Rule Engine</span><span><StatusDot /> WebSocket</span><span><StatusDot /> MongoDB Time-Series</span></section>
     </>
   );
@@ -423,10 +452,16 @@ export default function Dashboard() {
       <div className="ambient ambient-a" /><div className="ambient ambient-b" />
       <div className="dashboard-content">
         {view === "Overview" && overviewContent}
-        {view === "Devices" && <>{<DevicesView devices={devices} selectedId={selectedDeviceId} onSelect={openDevice} />}<DeviceDetail device={selectedDevice} telemetry={selectedTelemetry} alerts={alerts} onBack={() => navigate("Overview")} /></>}
+        {view === "Devices" && <>{<DevicesView devices={devices} selectedId={selectedDeviceId} onSelect={openDevice} />}<DeviceDetail device={selectedDevice} telemetry={selectedTelemetry} alerts={displayedAlerts} onBack={() => navigate("Overview")} /></>}
         {view === "Pipeline" && <RulePipeline device={selectedDevice} latest={latest} telemetry={selectedTelemetry} />}
         {view === "Telemetry" && <section className="page-card glass-card"><div className="page-title-row"><div><span className="eyebrow">LIVE TELEMETRY · {selectedDevice.deviceId}</span><h2>{selectedDevice.name} telemetry</h2><p>Temperature, pressure, RPM and vibration from the selected machine.</p></div><span className="fleet-live"><StatusDot /> LIVE</span></div><div className="detail-grid">{metrics.map((metric) => <TelemetryChart key={metric} metric={metric} telemetry={telemetry} />)}</div></section>}
-        {view === "Alerts" && <AlertsView alerts={alerts} onAcknowledge={acknowledgeAlert} onOpenDevice={openDevice} />}
+        {view === "Alerts" && (
+          <AlertsView
+            alerts={displayedAlerts}
+            onAcknowledge={acknowledgeAlert}
+            onOpenDevice={openDevice}
+          />
+        )}
       </div>
     </main>
   );
