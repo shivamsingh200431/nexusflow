@@ -8,13 +8,13 @@ export function deleteNodeFromFlow(nodes = [], edges = [], nodeId) {
 }
 
 export function addNodeToFlow(nodes = [], node, clearCanvas = null) {
+  if (nodes.length === 0 || clearCanvas === false) {
+    return { action: 'add', nodes: [...nodes, node] };
+  }
+
   if (clearCanvas === null) {
     return { action: 'confirm', node };
   }
 
-  if (clearCanvas) {
-    return { action: 'clear-and-add', nodes: [node] };
-  }
-
-  return { action: 'add', nodes: [...nodes, node] };
+  return { action: 'clear-and-add', nodes: [node] };
 }
