@@ -21,6 +21,19 @@ describe('validateFlow', () => {
     expect(validateFlow(makeFlow())).toEqual({ valid: true, errors: [] });
   });
 
+  it('accepts multiple nodes of the same supported type', () => {
+    const nodes = [
+      ...validNodes,
+      { id: 'average-2', type: 'movingAverage', data: { metric: 'pressure', window: 3 } },
+    ];
+    const edges = [
+      ...validEdges,
+      { id: 'e4', source: 'sensor-1', target: 'average-2' },
+    ];
+
+    expect(validateFlow(makeFlow(nodes, edges))).toEqual({ valid: true, errors: [] });
+  });
+
   it('rejects an empty flow', () => {
     expect(validateFlow({ nodes: [], edges: [] })).toEqual({
       valid: false,
@@ -28,12 +41,12 @@ describe('validateFlow', () => {
     });
   });
 
-  it('requires exactly one node of each supported type', () => {
+  it('requires each supported node type to be present', () => {
     const nodes = validNodes.filter((node) => node.type !== 'threshold');
 
     expect(validateFlow(makeFlow(nodes, validEdges.slice(0, 2)))).toEqual({
       valid: false,
-      errors: ['Flow must contain exactly one Threshold node.'],
+      errors: ['Flow must contain at least one Threshold node.'],
     });
   });
 
