@@ -4,25 +4,10 @@ import '@xyflow/react/dist/style.css';
 import FlowCanvas from '../components/FlowCanvas';
 import NodePalette from '../components/NodePalette';
 import NodeConfig from '../components/NodeConfig';
-import flowApi from '../api/flowApi';
-
-// Helper to generate unique IDs
-let nodeIdCounter = 0;
-const generateNodeId = (type) => `${type}-${Date.now()}-${++nodeIdCounter}`;
-
-const getDefaultData = (type) => {
-  switch (type) {
-    case 'sensor': return { deviceId: 'turbine-001' };
-    case 'movingAverage': return { metric: 'temperature', window: 5 };
-    case 'threshold': return { metric: 'temperature', operator: '>', value: 80 };
-    case 'alert': return { channel: 'mock-sms' };
-    default: return {};
-  }
-};
+import { saveFlow as saveFlowApi, fetchFlows } from '../rule-engine/flowApi.js';
 
 // V1 linear pipeline connection rules:
 //   Sensor -> Moving Average -> Threshold -> Alert
-// Only these transitions are allowed.
 const VALID_CONNECTIONS = {
   sensor: 'movingAverage',
   movingAverage: 'threshold',
@@ -33,11 +18,14 @@ function isValidConnection(connection, nodes) {
   if (!connection || !connection.source || !connection.target) {
     return false;
   }
-  const source = nodes.find((n) => n.id === connection.source);
-  const target = nodes.find((n) => n.id === connection.target);
+
+  const source = nodes.find((node) => node.id === connection.source);
+  const target = nodes.find((node) => node.id === connection.target);
+
   if (!source || !target) {
     return false;
   }
+
   // Reject self-loops and any connection that violates the linear pipeline.
   return VALID_CONNECTIONS[source.type] === target.type;
 }
@@ -52,43 +40,49 @@ function FlowBuilder() {
   const [selectedNode, setSelectedNode] = useState(null);
 
   const onNodesChange = useCallback((changes) => {
-    setNodes((nds) => applyNodeChanges(changes, nds));
+    setNodes((currentNodes) => applyNodeChanges(changes, currentNodes));
   }, []);
 
   const onEdgesChange = useCallback((changes) => {
-    setEdges((eds) => applyEdgeChanges(changes, eds));
+    setEdges((currentEdges) => applyEdgeChanges(changes, currentEdges));
   }, []);
 
   const onConnect = useCallback((connection) => {
-    setEdges((eds) => {
+    setEdges((currentEdges) => {
       if (isValidConnection(connection, nodes)) {
-        return addEdge(connection, eds);
+        return addEdge(connection, currentEdges);
       }
-      return eds;
+      return currentEdges;
     });
   }, [nodes]);
 
-  const addNode = (type) => {
-    const newNode = {
-      id: generateNodeId(type),
-      type,
-      position: { x: 250, y: 100 + nodes.length * 100 },
-      data: getDefaultData(type),
-    };
-    setNodes((nds) => [...nds, newNode]);
-  };
+  const addNode = useCallback((node) => {
+    setNodes((currentNodes) => [...currentNodes, node]);
+  }, []);
 
   const updateNode = (id, newNode) => {
-    setNodes((nds) => nds.map((n) => (n.id === id ? newNode : n)));
+    setNodes((currentNodes) =>
+      currentNodes.map((node) => (node.id === id ? newNode : node))
+    );
     setSelectedNode(newNode);
   };
 
-  const saveFlow = async () => {
+  const fetchSavedFlows = useCallback(async () => {
+    try {
+      const data = await fetchFlows();
+      setSavedFlows(data.flows || []);
+    } catch (error) {
+      console.error('Fetch flows failed:', error);
+      setSaveStatus('Failed to load saved flows');
+    }
+  }, []);
+
+  const saveCurrentFlow = async () => {
     setIsSaving(true);
     setSaveStatus('');
+
     try {
-      // PRESERVE POSITION: do not strip it.
-      await flowApi.saveFlow(nodes, edges);
+      await saveFlowApi({ nodes, edges });
       setSaveStatus('Flow saved');
       await fetchSavedFlows();
     } catch (error) {
@@ -99,43 +93,77 @@ function FlowBuilder() {
     }
   };
 
-  const loadFlow = async (flowId) => {
+  const loadFlow = useCallback((flow) => {
     setIsLoading(true);
+
     try {
-      const flow = await flowApi.getFlowById(flowId);
-      // RESTORE POSITION: flow.nodes already has it from the database/API
-      setNodes(flow.nodes);
-      setEdges(flow.edges);
-      setSaveStatus(`Loaded flow: ${flowId}`);
-    } catch (error) {
-      console.error('Load failed:', error);
-      setSaveStatus('Failed to load flow');
+      setNodes(flow.nodes || []);
+      setEdges(flow.edges || []);
+      setSelectedNode(null);
+      setSaveStatus(`Loaded flow: ${flow._id || 'saved flow'}`);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const fetchSavedFlows = async () => {
-    try {
-      const flows = await flowApi.getFlows();
-      setSavedFlows(flows);
-    } catch (error) {
-      console.error('Fetch flows failed:', error);
-    }
-  };
+  }, []);
 
   useEffect(() => {
     fetchSavedFlows();
-  }, []);
+  }, [fetchSavedFlows]);
 
   return (
     <div style={{ display: 'flex', height: '90vh', flexDirection: 'column' }}>
-      <div style={{ padding: '12px 16px', borderBottom: '1px solid #e0e0e0', background: '#fafafa', display: 'flex', gap: 12, alignItems: 'center' }}>
-        <NodePalette onAddNode={addNode} disabled={isSaving || isLoading} />
+      <div
+        style={{
+          padding: '12px 16px',
+          borderBottom: '1px solid #e0e0e0',
+          background: '#fafafa',
+          display: 'flex',
+          gap: 12,
+          alignItems: 'center',
+        }}
+      >
+        <NodePalette
+          onAddNode={addNode}
+          disabled={isSaving || isLoading}
+        />
+
         <div style={{ flex: 1 }} />
-        <button onClick={saveFlow} style={{ padding: '8px 16px', backgroundColor: '#2e7d32', color: 'white', borderRadius: 4, cursor: 'pointer' }} disabled={isSaving || nodes.length === 0}>
+
+        <select
+          aria-label="Load saved flow"
+          defaultValue=""
+          disabled={isSaving || isLoading || savedFlows.length === 0}
+          onChange={(event) => {
+            const flow = savedFlows.find((item) => item._id === event.target.value);
+            if (flow) {
+              loadFlow(flow);
+            }
+            event.target.value = '';
+          }}
+          style={{ padding: '8px 12px', borderRadius: 4 }}
+        >
+          <option value="">{savedFlows.length ? 'Load saved flow' : 'No saved flows'}</option>
+          {savedFlows.map((flow, index) => (
+            <option key={flow._id} value={flow._id}>
+              Flow {index + 1}
+            </option>
+          ))}
+        </select>
+
+        <button
+          onClick={saveCurrentFlow}
+          style={{
+            padding: '8px 16px',
+            backgroundColor: '#2e7d32',
+            color: 'white',
+            borderRadius: 4,
+            cursor: 'pointer',
+          }}
+          disabled={isSaving || isLoading || nodes.length === 0}
+        >
           {isSaving ? 'Saving...' : 'Save Flow'}
         </button>
+
         {saveStatus && <span style={{ fontSize: 13, fontWeight: 500 }}>{saveStatus}</span>}
       </div>
 
@@ -149,7 +177,12 @@ function FlowBuilder() {
           isValidConnection={(connection) => isValidConnection(connection, nodes)}
           onNodeClick={setSelectedNode}
         />
-        <NodeConfig node={selectedNode} onUpdateNode={updateNode} nodes={nodes} edges={edges} />
+        <NodeConfig
+          node={selectedNode}
+          onUpdateNode={updateNode}
+          nodes={nodes}
+          edges={edges}
+        />
       </div>
     </div>
   );
