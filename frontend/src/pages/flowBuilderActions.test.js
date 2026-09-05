@@ -22,7 +22,7 @@ describe('Flow Builder actions', () => {
   });
 
   it('adds a node to an empty canvas without confirmation', () => {
-    expect(addNodeToFlow([], newNode, false)).toEqual({
+    expect(addNodeToFlow([], newNode, null)).toEqual({
       action: 'add',
       nodes: [newNode],
     });
