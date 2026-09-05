@@ -30,6 +30,7 @@
   background: #e0f2fe;
   color: #0369a1;
 }
+
 .nf-app {
   display: grid;
   grid-template-rows: 56px 1fr;
@@ -127,7 +128,7 @@
 /* ---- Main Layout ------------------------------------------- */
 .nf-main {
   display: grid;
-  grid-template-columns: 220px 1fr 280px;
+  grid-template-columns: 250px 1fr 280px;
   height: 100%;
   overflow: hidden;
 }
@@ -147,30 +148,63 @@
 }
 
 .nf-sidebar__header {
-  padding: 14px 16px;
+  padding: 14px 16px 6px;
   font-size: 12px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: var(--text-muted);
+}
+
+.nf-sidebar__intro {
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--panel-border);
 }
 
+.nf-sidebar__hint {
+  padding: 0 16px;
+  color: var(--text-faint);
+  font-size: 11px;
+}
+
 .nf-sidebar__list {
-  padding: 10px;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+}
+
+/* ---- Palette Groups ---------------------------------------- */
+.nf-palette-group {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  overflow-y: auto;
+}
+
+.nf-palette-group__title {
+  padding: 0 8px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.nf-palette-group__items {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
 }
 
 /* ---- Palette Buttons --------------------------------------- */
 .nf-palette-btn {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
-  padding: 12px 14px;
+  min-height: 42px;
+  padding: 9px 10px;
   font-size: 13px;
   font-weight: 500;
   color: var(--text);
@@ -182,17 +216,34 @@
   text-align: left;
 }
 
-.nf-palette-btn:hover {
+.nf-palette-btn:hover:not(:disabled) {
   background: var(--panel);
   border-color: var(--accent);
 }
 
-.nf-palette-btn:active {
+.nf-palette-btn:active:not(:disabled) {
   transform: scale(0.98);
 }
 
+.nf-palette-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.nf-palette-btn__grip {
+  color: var(--text-faint);
+  font-size: 14px;
+  line-height: 1;
+}
+
 .nf-palette-btn__icon {
-  font-size: 16px;
+  font-size: 15px;
+}
+
+.nf-palette-btn__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nf-palette-btn--sensor { border-left: 3px solid var(--sensor); }
@@ -236,7 +287,6 @@
   stroke-width: 2 !important;
 }
 
-/* Edge colors by source node type */
 .react-flow__edge.animated .react-flow__edge-path {
   stroke-dasharray: 8 4;
   animation: nf-dash 0.8s linear infinite;
@@ -349,7 +399,7 @@
 
 /* ---- Config Panel ------------------------------------------ */
 .nf-config__empty {
-  padding: 24px;
+  padding: 24px 18px;
   text-align: center;
   color: var(--text-faint);
   font-size: 12px;
@@ -357,30 +407,30 @@
 
 .nf-config__fields {
   flex: 1;
-  padding: 12px;
+  padding: 16px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .nf-config__field {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 .nf-config__label {
-  font-size: 11px;
-  font-weight: 500;
+  font-size: 10px;
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
 }
 
 .nf-config__input {
   width: 100%;
-  padding: 8px 10px;
+  padding: 9px 10px;
   font-size: 13px;
   font-family: inherit;
   color: var(--text);
@@ -400,10 +450,117 @@
   color: var(--text-faint);
 }
 
+/* ---- Flow Editor ------------------------------------------- */
+.nf-flow-editor {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  min-height: 560px;
+  overflow: hidden;
+  background: var(--canvas-bg);
+  color: var(--text);
+}
+
+.nf-flow-editor__header {
+  display: flex;
+  align-items: center;
+  min-height: 64px;
+  padding: 0 18px;
+  gap: 12px;
+  background: #171b25;
+  border-bottom: 1px solid #252b38;
+  flex-shrink: 0;
+}
+
+.nf-flow-editor__back {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font-size: 22px;
+  cursor: pointer;
+}
+
+.nf-flow-editor__back:hover {
+  background: #222936;
+}
+
+.nf-flow-editor__identity {
+  min-width: 150px;
+}
+
+.nf-flow-editor__title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.nf-flow-editor__subtitle {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.nf-flow-editor__actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nf-flow-editor__select {
+  min-width: 150px;
+  padding: 8px 10px;
+  color: var(--text);
+  background: #111722;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+
+.nf-flow-editor__select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.nf-flow-editor__test {
+  min-width: 108px;
+}
+
+.nf-flow-editor__save {
+  min-width: 82px;
+}
+
+.nf-flow-editor__main {
+  min-height: 0;
+  flex: 1;
+}
+
+.nf-flow-editor__status {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 20;
+  padding: 8px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  background: #171b25;
+  color: var(--text);
+  font-size: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
 /* ---- Responsive -------------------------------------------- */
 @media (max-width: 1280px) {
   .nf-main {
-    grid-template-columns: 200px 1fr 260px;
+    grid-template-columns: 220px 1fr 260px;
   }
   .nf-node { width: 200px; }
 }
@@ -432,6 +589,10 @@
   .nf-navbar__subtitle { display: none; }
   .nf-navbar__actions { gap: 6px; }
   .nf-btn { padding: 6px 10px; font-size: 12px; }
+  .nf-flow-editor__header { padding: 0 10px; }
+  .nf-flow-editor__subtitle { display: none; }
+  .nf-flow-editor__select { min-width: 0; width: 120px; }
+  .nf-flow-editor__test { min-width: 0; }
 }
 
 /* Basic nav/main styles for main's page structure (non-React-Flow pages) */
