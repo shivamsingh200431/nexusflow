@@ -1,53 +1,75 @@
 import { Observable } from 'rxjs';
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const WS_URL = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:5000/ws';
+
+function isTelemetryEvent(event) {
+  return (
+    event &&
+    event.type === 'telemetry' &&
+    typeof event.timestamp === 'string' &&
+    typeof event.deviceId === 'string' &&
+    event.data &&
+    typeof event.data === 'object' &&
+    !Array.isArray(event.data)
+  );
+}
 
 export function telemetry$(deviceId) {
   return new Observable((subscriber) => {
     let stopped = false;
-    let lastTelemetryId = null;
+    let socket = null;
 
-    const poll = async () => {
-      try {
-        const url = deviceId
-          ? `${API_BASE}/telemetry?deviceId=${encodeURIComponent(deviceId)}`
-          : `${API_BASE}/telemetry`;
+    const connect = () => {
+      if (stopped) {
+        return;
+      }
 
-        const response = await fetch(url);
+      socket = new WebSocket(WS_URL);
 
-        if (!response.ok) {
-          throw new Error(`Telemetry API returned ${response.status}`);
-        }
+      socket.addEventListener('message', ({ data }) => {
+        try {
+          const event = JSON.parse(data);
 
-        const data = await response.json();
-
-        if (data.telemetry?.length) {
-          const latest = data.telemetry[0];
-
-          if (latest._id !== lastTelemetryId) {
-            lastTelemetryId = latest._id;
-
-            subscriber.next({
-              timestamp: latest.timestamp,
-              deviceId: latest.deviceId,
-              metrics: latest.metrics || {},
-            });
+          if (!isTelemetryEvent(event)) {
+            return;
           }
-        }
-      } catch (error) {
-        console.error('Telemetry polling failed:', error.message);
-      }
 
-      if (!stopped) {
-        setTimeout(poll, 2000);
-      }
+          if (deviceId && event.deviceId !== deviceId) {
+            return;
+          }
+
+          subscriber.next({
+            timestamp: event.timestamp,
+            deviceId: event.deviceId,
+            metrics: event.data,
+          });
+        } catch (error) {
+          console.error('Telemetry WebSocket message failed:', error.message);
+        }
+      });
+
+      socket.addEventListener('error', (error) => {
+        console.error('Telemetry WebSocket error:', error);
+      });
+
+      socket.addEventListener('close', () => {
+        if (!stopped) {
+          // Keep the rule engine alive and reconnect if the backend restarts or
+          // the browser temporarily loses the WebSocket connection.
+          setTimeout(connect, 2000);
+        }
+      });
     };
 
-    poll();
+    connect();
 
     return () => {
       stopped = true;
+
+      if (socket) {
+        socket.close();
+        socket = null;
+      }
     };
   });
 }
