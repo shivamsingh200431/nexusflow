@@ -26,7 +26,7 @@ const CONFIG_FIELDS = {
   ],
 }
 
-export default function NodeConfig({ node, onUpdate }) {
+export default function NodeConfig({ node, onUpdate, onDelete }) {
   if (!node) {
     return (
       <aside className="nf-sidebar nf-sidebar--config">
@@ -81,6 +81,15 @@ export default function NodeConfig({ node, onUpdate }) {
             )}
           </div>
         ))}
+      </div>
+      <div className="nf-config__actions">
+        <button
+          className="nf-btn nf-btn--danger nf-config__delete"
+          type="button"
+          onClick={() => onDelete(node.id)}
+        >
+          Delete Node
+        </button>
       </div>
     </aside>
   )
