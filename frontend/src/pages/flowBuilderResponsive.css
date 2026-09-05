@@ -1,69 +1,218 @@
 /* Responsive overrides for the full-screen Flow Builder editor. */
-.nf-flow-editor__main { min-width: 0; }
+.nf-flow-editor,
+.nf-flow-editor__main,
 .nf-flow-editor__main > .nf-sidebar,
-.nf-flow-editor__main > .nf-canvas { min-width: 0; }
+.nf-flow-editor__main > .nf-canvas {
+  min-width: 0;
+}
+
+.nf-flow-editor__main {
+  min-height: 0;
+}
+
+@media (max-width: 1280px) and (min-width: 901px) {
+  .nf-flow-editor__main {
+    grid-template-columns: 220px minmax(0, 1fr) 250px;
+  }
+
+  .nf-flow-editor__identity {
+    min-width: 130px;
+  }
+
+  .nf-flow-editor__header {
+    gap: 8px;
+    padding: 0 14px;
+  }
+
+  .nf-flow-editor__actions {
+    gap: 6px;
+  }
+
+  .nf-flow-editor__select {
+    min-width: 130px;
+  }
+}
 
 @media (max-width: 900px) {
-  .nf-flow-editor { height: 100dvh; min-height: 0; overflow: hidden; }
-  .nf-flow-editor__header { min-height: 0; padding: 10px 14px; flex-wrap: wrap; }
-  .nf-flow-editor__actions { width: 100%; margin-left: 46px; overflow-x: auto; padding-bottom: 2px; }
+  .nf-flow-editor {
+    height: 100dvh;
+    min-height: 0;
+    overflow: auto;
+    overflow-x: hidden;
+  }
+
+  .nf-flow-editor__header {
+    min-height: 0;
+    padding: 10px 14px;
+    flex-wrap: wrap;
+  }
+
+  .nf-flow-editor__identity {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .nf-flow-editor__actions {
+    width: 100%;
+    margin-left: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .nf-flow-editor__select,
+  .nf-flow-editor__test,
+  .nf-flow-editor__save {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .nf-flow-editor__select {
+    width: 100%;
+  }
+
   .nf-flow-editor__main {
     display: grid;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(360px, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
     height: auto;
     min-height: 0;
-    overflow: hidden;
+    overflow: visible;
   }
-  .nf-flow-editor__main > .nf-sidebar:first-child {
+
+  .nf-flow-editor__main > .nf-sidebar:first-child,
+  .nf-flow-editor__main > .nf-sidebar:last-child {
+    width: 100%;
+    min-width: 0;
+    max-height: none;
+    min-height: 0;
+    overflow: visible;
     border-right: none;
-    border-bottom: 1px solid var(--panel-border);
-    max-height: 180px;
-    overflow: hidden;
+    border-left: none;
   }
+
+  .nf-flow-editor__main > .nf-sidebar:first-child {
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .nf-flow-editor__main > .nf-sidebar:last-child {
+    border-top: 1px solid var(--panel-border);
+  }
+
   .nf-flow-editor__main > .nf-sidebar:first-child .nf-sidebar__list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
     padding: 10px 12px 12px;
-    overflow-y: auto;
+    overflow: visible;
     min-height: 0;
   }
-  .nf-flow-editor__main > .nf-canvas { min-height: 360px; height: auto; }
-  .nf-flow-editor__main > .nf-sidebar:last-child {
-    border-left: none;
-    border-top: 1px solid var(--panel-border);
-    min-height: 170px;
-    max-height: 260px;
+
+  .nf-flow-editor__main > .nf-sidebar:first-child .nf-palette-group__items {
+    gap: 7px;
   }
-  .nf-config__fields { overflow-y: auto; }
+
+  .nf-flow-editor__main > .nf-canvas {
+    width: 100%;
+    height: 420px;
+    min-height: 420px;
+  }
+
+  .nf-config__fields {
+    min-height: 0;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  .nf-flow-editor__status {
+    max-width: calc(100vw - 28px);
+    text-align: center;
+  }
 }
 
 @media (max-width: 600px) {
-  .nf-flow-editor__header { align-items: flex-start; }
-  .nf-flow-editor__back { width: 30px; height: 30px; font-size: 20px; }
-  .nf-flow-editor__title { font-size: 15px; }
-  .nf-flow-editor__actions {
-    margin-left: 0;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    width: 100%;
-    overflow: visible;
+  .nf-flow-editor__header {
+    align-items: flex-start;
+    padding: 9px 12px 11px;
   }
-  .nf-flow-editor__select { min-width: 0; max-width: none; width: 100%; }
+
+  .nf-flow-editor__back {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    font-size: 20px;
+  }
+
+  .nf-flow-editor__title {
+    font-size: 15px;
+  }
+
+  .nf-flow-editor__subtitle {
+    font-size: 10px;
+  }
+
+  .nf-flow-editor__actions {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 6px;
+  }
+
+  .nf-flow-editor__select,
   .nf-flow-editor__test,
-  .nf-flow-editor__save { min-width: 0; padding: 8px 10px; }
-  .nf-flow-editor__main { grid-template-rows: auto minmax(320px, 1fr) auto; }
-  .nf-flow-editor__main > .nf-sidebar:first-child { max-height: 235px; }
-  .nf-flow-editor__main > .nf-sidebar:first-child .nf-sidebar__list { grid-template-columns: 1fr; }
-  .nf-flow-editor__main > .nf-canvas { min-height: 320px; }
-  .nf-flow-editor__main > .nf-sidebar:last-child { min-height: 160px; max-height: 230px; }
-  .nf-node { width: 190px; }
+  .nf-flow-editor__save {
+    min-width: 0;
+    width: 100%;
+    padding: 8px 9px;
+    font-size: 12px;
+  }
+
+  .nf-flow-editor__test,
+  .nf-flow-editor__save {
+    white-space: nowrap;
+  }
+
+  .nf-flow-editor__main > .nf-sidebar:first-child .nf-sidebar__list {
+    grid-template-columns: 1fr;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  .nf-flow-editor__main > .nf-canvas {
+    height: 380px;
+    min-height: 380px;
+  }
+
+  .nf-node {
+    width: 190px;
+    max-width: calc(100vw - 40px);
+  }
+
+  .nf-config__fields {
+    max-height: 280px;
+    padding: 14px;
+  }
 }
 
 @media (max-width: 420px) {
-  .nf-flow-editor__actions { grid-template-columns: 1fr 1fr; }
-  .nf-flow-editor__select { grid-column: 1 / -1; }
+  .nf-flow-editor__actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .nf-flow-editor__select {
+    grid-column: 1 / -1;
+  }
+
   .nf-flow-editor__test,
-  .nf-flow-editor__save { width: 100%; }
+  .nf-flow-editor__save {
+    width: 100%;
+  }
+
+  .nf-flow-editor__main > .nf-canvas {
+    height: 340px;
+    min-height: 340px;
+  }
+
+  .nf-config__fields {
+    max-height: 260px;
+  }
 }
