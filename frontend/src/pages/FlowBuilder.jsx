@@ -5,6 +5,7 @@ import FlowCanvas from '../components/FlowCanvas';
 import NodePalette from '../components/NodePalette';
 import NodeConfig from '../components/NodeConfig';
 import { saveFlow as saveFlowApi, fetchFlows } from '../rule-engine/flowApi.js';
+import { restartRuleEngine } from '../rule-engine/alertService.js';
 
 // V1 linear pipeline connection rules:
 //   Sensor -> Moving Average -> Threshold -> Alert
@@ -107,7 +108,14 @@ function FlowBuilder() {
 
     try {
       await saveFlowApi({ nodes, edges });
-      setSaveStatus('Flow saved');
+      const engineStatus = await restartRuleEngine();
+
+      if (engineStatus?.state === 'error') {
+        setSaveStatus('Flow saved, but rule engine failed to restart');
+      } else {
+        setSaveStatus('Flow saved and rule engine updated');
+      }
+
       await fetchSavedFlows();
     } catch (error) {
       console.error('Save failed:', error);
