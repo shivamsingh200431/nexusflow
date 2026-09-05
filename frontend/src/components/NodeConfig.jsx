@@ -1,3 +1,5 @@
+import './nodeConfig.css'
+
 const getDisplayName = (type) => {
   const names = {
     sensor: 'Sensor',
