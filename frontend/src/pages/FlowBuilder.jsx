@@ -8,8 +8,6 @@ import NodeConfig from '../components/NodeConfig';
 import { saveFlow as saveFlowApi, fetchFlows } from '../rule-engine/flowApi.js';
 import { restartRuleEngine } from '../rule-engine/alertService.js';
 
-// V1 linear pipeline connection rules:
-//   Sensor -> Moving Average -> Threshold -> Alert
 const VALID_CONNECTIONS = {
   sensor: 'movingAverage',
   movingAverage: 'threshold',
@@ -17,18 +15,12 @@ const VALID_CONNECTIONS = {
 };
 
 function isValidConnection(connection, nodes) {
-  if (!connection || !connection.source || !connection.target) {
-    return false;
-  }
+  if (!connection || !connection.source || !connection.target) return false;
 
   const source = nodes.find((node) => node.id === connection.source);
   const target = nodes.find((node) => node.id === connection.target);
 
-  if (!source || !target) {
-    return false;
-  }
-
-  // Reject self-loops and any connection that violates the linear pipeline.
+  if (!source || !target) return false;
   return VALID_CONNECTIONS[source.type] === target.type;
 }
 
@@ -60,6 +52,10 @@ function FlowBuilder() {
     });
   }, [nodes]);
 
+  const handleNodeClick = useCallback((_event, node) => {
+    setSelectedNode(node);
+  }, []);
+
   const addNode = useCallback((node) => {
     setNodes((currentNodes) => {
       if (currentNodes.length > 0) {
@@ -67,9 +63,7 @@ function FlowBuilder() {
           'Do you want to clear the current page before adding this node?'
         );
 
-        if (!shouldClear) {
-          return currentNodes;
-        }
+        if (!shouldClear) return currentNodes;
 
         setEdges([]);
         setSelectedNode(null);
@@ -82,14 +76,12 @@ function FlowBuilder() {
   const updateNode = (id, newData) => {
     setNodes((currentNodes) =>
       currentNodes.map((node) =>
-        node.id === id
-          ? { ...node, data: newData }
-          : node
+        node.id === id ? { ...node, data: newData } : node
       )
     );
 
     setSelectedNode((currentNode) =>
-      currentNode
+      currentNode?.id === id
         ? { ...currentNode, data: newData }
         : currentNode
     );
@@ -191,9 +183,7 @@ function FlowBuilder() {
             disabled={isBusy || savedFlows.length === 0}
             onChange={(event) => {
               const flow = savedFlows.find((item) => item._id === event.target.value);
-              if (flow) {
-                loadFlow(flow);
-              }
+              if (flow) loadFlow(flow);
               event.target.value = '';
             }}
           >
@@ -228,10 +218,7 @@ function FlowBuilder() {
       </header>
 
       <div className="nf-main nf-flow-editor__main">
-        <NodePalette
-          onAddNode={addNode}
-          disabled={isBusy}
-        />
+        <NodePalette onAddNode={addNode} disabled={isBusy} />
 
         <FlowCanvas
           nodes={nodes}
@@ -240,13 +227,10 @@ function FlowBuilder() {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           isValidConnection={(connection) => isValidConnection(connection, nodes)}
-          onNodeClick={setSelectedNode}
+          onNodeClick={handleNodeClick}
         />
 
-        <NodeConfig
-          node={selectedNode}
-          onUpdate={updateNode}
-        />
+        <NodeConfig node={selectedNode} onUpdate={updateNode} />
       </div>
 
       {saveStatus && (
