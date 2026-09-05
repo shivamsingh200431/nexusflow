@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { applyNodeChanges, applyEdgeChanges, addEdge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import './flowBuilderResponsive.css';
+import './flowBuilderModal.css';
 import FlowCanvas from '../components/FlowCanvas';
 import NodePalette from '../components/NodePalette';
 import NodeConfig from '../components/NodeConfig';
@@ -35,6 +36,8 @@ function FlowBuilder() {
   const [isTesting, setIsTesting] = useState(false);
   const [savedFlows, setSavedFlows] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [addConfirmationChoice, setAddConfirmationChoice] = useState(null);
+  const [pendingNode, setPendingNode] = useState(null);
 
   const onNodesChange = useCallback((changes) => {
     setNodes((currentNodes) => applyNodeChanges(changes, currentNodes));
@@ -55,19 +58,47 @@ function FlowBuilder() {
     setSelectedNode(node);
   }, []);
 
+  const applyAddedNode = useCallback((node, clearCanvas) => {
+    const result = addNodeToFlow(nodes, node, clearCanvas);
+
+    if (result.action === 'clear-and-add') {
+      setEdges([]);
+      setSelectedNode(null);
+    }
+
+    setNodes(result.nodes);
+  }, [nodes]);
+
   const addNode = useCallback((node) => {
-    setNodes((currentNodes) => {
-      const nextNodes = addNodeToFlow(currentNodes, node);
-      if (!nextNodes) return currentNodes;
+    const result = addNodeToFlow(nodes, node, addConfirmationChoice);
 
-      if (currentNodes.length > 0) {
-        setEdges([]);
-        setSelectedNode(null);
-      }
+    if (result.action === 'confirm') {
+      setPendingNode(node);
+      return;
+    }
 
-      return nextNodes;
-    });
-  }, []);
+    if (result.action === 'clear-and-add') {
+      setEdges([]);
+      setSelectedNode(null);
+    }
+
+    setNodes(result.nodes);
+  }, [nodes, addConfirmationChoice]);
+
+  const handleAddChoice = useCallback((clearCanvas) => {
+    if (!pendingNode) return;
+
+    setAddConfirmationChoice(clearCanvas);
+    const result = addNodeToFlow(nodes, pendingNode, clearCanvas);
+
+    if (result.action === 'clear-and-add') {
+      setEdges([]);
+      setSelectedNode(null);
+    }
+
+    setNodes(result.nodes);
+    setPendingNode(null);
+  }, [nodes, pendingNode]);
 
   const deleteNode = useCallback((nodeId) => {
     setNodes((currentNodes) => {
@@ -190,6 +221,49 @@ function FlowBuilder() {
         <NodeConfig node={selectedNode} onUpdate={updateNode} onDelete={deleteNode} />
       </div>
       {saveStatus && <div className="nf-flow-editor__status" role="status">{saveStatus}</div>}
+
+      {pendingNode && (
+        <div className="nf-flow-confirm__backdrop" role="presentation">
+          <div
+            className="nf-flow-confirm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="nf-flow-confirm-title"
+          >
+            <div className="nf-flow-confirm__eyebrow">Add node</div>
+            <h2 id="nf-flow-confirm-title">How do you want to add this node?</h2>
+            <p>
+              Your canvas already contains a flow. You can clear it and start fresh,
+              or keep it and add this node to the existing canvas.
+            </p>
+            <div className="nf-flow-confirm__actions">
+              <button
+                className="nf-btn"
+                type="button"
+                onClick={() => {
+                  setPendingNode(null);
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="nf-btn nf-btn--danger"
+                type="button"
+                onClick={() => handleAddChoice(true)}
+              >
+                Clear Canvas
+              </button>
+              <button
+                className="nf-btn nf-btn--primary"
+                type="button"
+                onClick={() => handleAddChoice(false)}
+              >
+                Keep Current Canvas
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
