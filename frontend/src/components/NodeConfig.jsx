@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'react'
+import { fetchDevices } from '../api/deviceApi.js'
+import { getDeviceOptions } from './nodeConfigActions.js'
 import './nodeConfig.css'
 
 const getDisplayName = (type) => {
@@ -12,7 +15,7 @@ const getDisplayName = (type) => {
 
 const CONFIG_FIELDS = {
   sensor: [
-    { key: 'deviceId', label: 'Device ID', type: 'text' },
+    { key: 'deviceId', label: 'Device', type: 'device' },
   ],
   movingAverage: [
     { key: 'metric', label: 'Metric', type: 'select', options: ['temperature', 'pressure', 'humidity', 'vibration', 'voltage', 'current'] },
@@ -29,6 +32,29 @@ const CONFIG_FIELDS = {
 }
 
 export default function NodeConfig({ node, onUpdate, onDelete }) {
+  const [devices, setDevices] = useState([])
+  const [devicesLoading, setDevicesLoading] = useState(false)
+
+  useEffect(() => {
+    if (!node || node.type !== 'sensor') return
+
+    let cancelled = false
+    setDevicesLoading(true)
+
+    fetchDevices()
+      .then((data) => {
+        if (!cancelled) setDevices(data.devices || [])
+      })
+      .catch((error) => {
+        console.error('Failed to load devices for sensor config:', error)
+      })
+      .finally(() => {
+        if (!cancelled) setDevicesLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [node?.id, node?.type])
+
   if (!node) {
     return (
       <aside className="nf-sidebar nf-sidebar--config">
@@ -39,6 +65,7 @@ export default function NodeConfig({ node, onUpdate, onDelete }) {
   }
 
   const fields = CONFIG_FIELDS[node.type] || []
+  const deviceOptions = getDeviceOptions(devices, node.data?.deviceId)
 
   const handleChange = (key, value) => {
     onUpdate(node.id, { ...node.data, [key]: value })
@@ -53,7 +80,25 @@ export default function NodeConfig({ node, onUpdate, onDelete }) {
         {fields.map((field) => (
           <div key={field.key} className="nf-config__field">
             <label className="nf-config__label">{field.label}</label>
-            {field.type === 'select' ? (
+            {field.type === 'device' ? (
+              devicesLoading ? (
+                <div className="nf-config__hint">Loading registered devices…</div>
+              ) : deviceOptions.length > 0 ? (
+                <select
+                  className="nf-config__input"
+                  value={node.data[field.key] ?? ''}
+                  onChange={(e) => handleChange(field.key, e.target.value)}
+                >
+                  {deviceOptions.map((device) => (
+                    <option key={device.value} value={device.value}>{device.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="nf-config__hint">
+                  No registered devices. Add one from the Devices page.
+                </div>
+              )
+            ) : field.type === 'select' ? (
               <select
                 className="nf-config__input"
                 value={node.data[field.key] ?? ''}
