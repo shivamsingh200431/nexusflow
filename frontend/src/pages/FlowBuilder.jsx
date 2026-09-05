@@ -60,11 +60,20 @@ function FlowBuilder() {
     setNodes((currentNodes) => [...currentNodes, node]);
   }, []);
 
-  const updateNode = (id, newNode) => {
+  const updateNode = (id, newData) => {
     setNodes((currentNodes) =>
-      currentNodes.map((node) => (node.id === id ? newNode : node))
+      currentNodes.map((node) =>
+        node.id === id
+          ? { ...node, data: newData }
+          : node
+      )
     );
-    setSelectedNode(newNode);
+
+    setSelectedNode((currentNode) =>
+      currentNode
+        ? { ...currentNode, data: newData }
+        : currentNode
+    );
   };
 
   const fetchSavedFlows = useCallback(async () => {
@@ -179,9 +188,7 @@ function FlowBuilder() {
         />
         <NodeConfig
           node={selectedNode}
-          onUpdateNode={updateNode}
-          nodes={nodes}
-          edges={edges}
+          onUpdate={updateNode}
         />
       </div>
     </div>
