@@ -8,6 +8,7 @@ import NodePalette from '../components/NodePalette';
 import NodeConfig from '../components/NodeConfig';
 import { saveFlow as saveFlowApi, fetchFlows } from '../rule-engine/flowApi.js';
 import { restartRuleEngine } from '../rule-engine/alertService.js';
+import { validateFlow } from '../rule-engine/flowValidation.js';
 
 const VALID_CONNECTIONS = {
   sensor: 'movingAverage',
@@ -59,18 +60,13 @@ function FlowBuilder() {
 
   const addNode = useCallback((node) => {
     setNodes((currentNodes) => {
-      if (currentNodes.length > 0) {
-        const shouldClear = window.confirm(
-          'Do you want to clear the current page before adding this node?'
-        );
-
-        if (!shouldClear) return currentNodes;
-
-        setEdges([]);
-        setSelectedNode(null);
+      const existingNode = currentNodes.find((currentNode) => currentNode.type === node.type);
+      if (existingNode) {
+        setSaveStatus(`${existingNode.type === 'movingAverage' ? 'Moving Average' : existingNode.type.charAt(0).toUpperCase() + existingNode.type.slice(1)} node already exists`);
+        return currentNodes;
       }
 
-      return [node];
+      return [...currentNodes, node];
     });
   }, []);
 
@@ -99,6 +95,12 @@ function FlowBuilder() {
   }, []);
 
   const saveCurrentFlow = async () => {
+    const validation = validateFlow({ nodes, edges });
+    if (!validation.valid) {
+      setSaveStatus(validation.errors.join(' '));
+      return;
+    }
+
     setIsSaving(true);
     setSaveStatus('');
 
@@ -122,6 +124,12 @@ function FlowBuilder() {
   };
 
   const testCurrentFlow = async () => {
+    const validation = validateFlow({ nodes, edges });
+    if (!validation.valid) {
+      setSaveStatus(validation.errors.join(' '));
+      return;
+    }
+
     setIsTesting(true);
     setSaveStatus('');
 
