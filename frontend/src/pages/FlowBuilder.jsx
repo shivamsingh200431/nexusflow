@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { applyNodeChanges, applyEdgeChanges, addEdge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import FlowCanvas from '../components/FlowCanvas';
@@ -32,11 +33,13 @@ function isValidConnection(connection, nodes) {
 }
 
 function FlowBuilder() {
+  const navigate = useNavigate();
   const [nodes, setNodes] = useState([]);
   const [edges, setEdges] = useState([]);
   const [saveStatus, setSaveStatus] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [savedFlows, setSavedFlows] = useState([]);
   const [selectedNode, setSelectedNode] = useState(null);
 
@@ -125,6 +128,25 @@ function FlowBuilder() {
     }
   };
 
+  const testCurrentFlow = async () => {
+    setIsTesting(true);
+    setSaveStatus('');
+
+    try {
+      const engineStatus = await restartRuleEngine();
+      if (engineStatus?.state === 'error') {
+        setSaveStatus('Test run failed to start');
+      } else {
+        setSaveStatus('Test run started');
+      }
+    } catch (error) {
+      console.error('Test run failed:', error);
+      setSaveStatus('Test run failed to start');
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
   const loadFlow = useCallback((flow) => {
     setIsLoading(true);
 
@@ -142,64 +164,75 @@ function FlowBuilder() {
     fetchSavedFlows();
   }, [fetchSavedFlows]);
 
+  const isBusy = isSaving || isLoading || isTesting;
+
   return (
-    <div style={{ display: 'flex', height: '90vh', flexDirection: 'column' }}>
-      <div
-        style={{
-          padding: '12px 16px',
-          borderBottom: '1px solid #e0e0e0',
-          background: '#fafafa',
-          display: 'flex',
-          gap: 12,
-          alignItems: 'center',
-        }}
-      >
-        <NodePalette
-          onAddNode={addNode}
-          disabled={isSaving || isLoading}
-        />
-
-        <div style={{ flex: 1 }} />
-
-        <select
-          aria-label="Load saved flow"
-          defaultValue=""
-          disabled={isSaving || isLoading || savedFlows.length === 0}
-          onChange={(event) => {
-            const flow = savedFlows.find((item) => item._id === event.target.value);
-            if (flow) {
-              loadFlow(flow);
-            }
-            event.target.value = '';
-          }}
-          style={{ padding: '8px 12px', borderRadius: 4 }}
-        >
-          <option value="">{savedFlows.length ? 'Load saved flow' : 'No saved flows'}</option>
-          {savedFlows.map((flow, index) => (
-            <option key={flow._id} value={flow._id}>
-              Flow {index + 1}
-            </option>
-          ))}
-        </select>
-
+    <div className="nf-flow-editor">
+      <header className="nf-flow-editor__header">
         <button
-          onClick={saveCurrentFlow}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#2e7d32',
-            color: 'white',
-            borderRadius: 4,
-            cursor: 'pointer',
-          }}
-          disabled={isSaving || isLoading || nodes.length === 0}
+          className="nf-flow-editor__back"
+          type="button"
+          onClick={() => navigate('/')}
+          aria-label="Back to dashboard"
         >
-          {isSaving ? 'Saving...' : 'Save Flow'}
+          <span aria-hidden="true">←</span>
         </button>
 
-        {saveStatus && <span style={{ fontSize: 13, fontWeight: 500 }}>{saveStatus}</span>}
-      </div>
+        <div className="nf-flow-editor__identity">
+          <div className="nf-flow-editor__title">Flow1</div>
+          <div className="nf-flow-editor__subtitle">Edit your automation flow</div>
+        </div>
 
-      <div style={{ display: 'flex', flex: 1 }}>
+        <div className="nf-flow-editor__actions">
+          <select
+            aria-label="Load saved flow"
+            className="nf-flow-editor__select"
+            defaultValue=""
+            disabled={isBusy || savedFlows.length === 0}
+            onChange={(event) => {
+              const flow = savedFlows.find((item) => item._id === event.target.value);
+              if (flow) {
+                loadFlow(flow);
+              }
+              event.target.value = '';
+            }}
+          >
+            <option value="">{savedFlows.length ? 'Load saved flow' : 'No saved flows'}</option>
+            {savedFlows.map((flow, index) => (
+              <option key={flow._id} value={flow._id}>
+                Flow {index + 1}
+              </option>
+            ))}
+          </select>
+
+          <button
+            className="nf-btn nf-flow-editor__test"
+            type="button"
+            onClick={testCurrentFlow}
+            disabled={isBusy || nodes.length === 0}
+          >
+            <span aria-hidden="true">▷</span>
+            {isTesting ? 'Testing...' : 'Test Run'}
+          </button>
+
+          <button
+            className="nf-btn nf-btn--primary nf-flow-editor__save"
+            type="button"
+            onClick={saveCurrentFlow}
+            disabled={isBusy || nodes.length === 0}
+          >
+            <span aria-hidden="true">▣</span>
+            {isSaving ? 'Saving...' : 'Save'}
+          </button>
+        </div>
+      </header>
+
+      <div className="nf-main nf-flow-editor__main">
+        <NodePalette
+          onAddNode={addNode}
+          disabled={isBusy}
+        />
+
         <FlowCanvas
           nodes={nodes}
           edges={edges}
@@ -209,11 +242,18 @@ function FlowBuilder() {
           isValidConnection={(connection) => isValidConnection(connection, nodes)}
           onNodeClick={setSelectedNode}
         />
+
         <NodeConfig
           node={selectedNode}
           onUpdate={updateNode}
         />
       </div>
+
+      {saveStatus && (
+        <div className="nf-flow-editor__status" role="status">
+          {saveStatus}
+        </div>
+      )}
     </div>
   );
 }
