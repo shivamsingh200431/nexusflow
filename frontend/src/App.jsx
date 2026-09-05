@@ -1,4 +1,4 @@
-import { NavLink, Route, Routes } from "react-router-dom";
+import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Devices from "./pages/devices";
 import FlowBuilder from "./pages/FlowBuilder";
@@ -6,22 +6,27 @@ import { AlertsProvider } from "./alerts/AlertsProvider.jsx";
 import "./App.css";
 
 function App() {
+  const location = useLocation();
+  const isFlowBuilder = location.pathname === "/flow-builder";
+
   return (
     <AlertsProvider>
       <>
-        <nav className="app-toplevel-nav">
-          <NavLink to="/" end>
-            Dashboard
-          </NavLink>
+        {!isFlowBuilder && (
+          <nav className="app-toplevel-nav">
+            <NavLink to="/" end>
+              Dashboard
+            </NavLink>
 
-          <NavLink to="/flow-builder">
-            Flow Builder
-          </NavLink>
+            <NavLink to="/flow-builder">
+              Flow Builder
+            </NavLink>
 
-          <NavLink to="/devices">
-            Devices
-          </NavLink>
-        </nav>
+            <NavLink to="/devices">
+              Devices
+            </NavLink>
+          </nav>
+        )}
 
         <Routes>
           <Route path="/" element={<Dashboard />} />
