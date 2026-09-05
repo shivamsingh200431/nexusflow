@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { applyNodeChanges, applyEdgeChanges, addEdge } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import './flowBuilderResponsive.css';
 import FlowCanvas from '../components/FlowCanvas';
 import NodePalette from '../components/NodePalette';
 import NodeConfig from '../components/NodeConfig';
