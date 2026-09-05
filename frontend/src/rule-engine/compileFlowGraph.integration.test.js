@@ -45,25 +45,12 @@ describe('compileFlowGraph integration', () => {
     const pipeline$ = compileFlowGraph(flowGraph);
     const subscription = pipeline$.subscribe((alert) => alerts.push(alert));
 
-    telemetrySubject.next({
-      timestamp: '2026-09-05T10:00:00.000Z',
-      deviceId: 'turbine-001',
-      metrics: { temperature: 70, pressure: 14.2, rpm: 3200 },
-    });
-    telemetrySubject.next({
-      timestamp: '2026-09-05T10:01:00.000Z',
-      deviceId: 'turbine-001',
-      metrics: { temperature: 75, pressure: 14.2, rpm: 3200 },
-    });
-    telemetrySubject.next({
-      timestamp: '2026-09-05T10:02:00.000Z',
-      deviceId: 'turbine-001',
-      metrics: { temperature: 80, pressure: 14.2, rpm: 3200 },
-    });
-    telemetrySubject.next({
-      timestamp: '2026-09-05T10:03:00.000Z',
-      deviceId: 'turbine-001',
-      metrics: { temperature: 85, pressure: 14.2, rpm: 3200 },
+    [70, 75, 80, 85, 95].forEach((temperature, index) => {
+      telemetrySubject.next({
+        timestamp: `2026-09-05T10:0${index}:00.000Z`,
+        deviceId: 'turbine-001',
+        metrics: { temperature, pressure: 14.2, rpm: 3200 },
+      });
     });
 
     expect(alerts).toHaveLength(1);
@@ -74,7 +61,7 @@ describe('compileFlowGraph integration', () => {
       severity: 'high',
       data: {
         metric: 'temperature',
-        value: 82.5,
+        value: 81,
         threshold: 80,
       },
     });
