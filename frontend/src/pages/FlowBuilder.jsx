@@ -9,6 +9,7 @@ import NodeConfig from '../components/NodeConfig';
 import { saveFlow as saveFlowApi, fetchFlows } from '../rule-engine/flowApi.js';
 import { restartRuleEngine } from '../rule-engine/alertService.js';
 import { validateFlow } from '../rule-engine/flowValidation.js';
+import { addNodeToFlow, deleteNodeFromFlow } from './flowBuilderActions.js';
 
 const VALID_CONNECTIONS = {
   sensor: 'movingAverage',
@@ -55,8 +56,27 @@ function FlowBuilder() {
   }, []);
 
   const addNode = useCallback((node) => {
-    setNodes((currentNodes) => [...currentNodes, node]);
+    setNodes((currentNodes) => {
+      const nextNodes = addNodeToFlow(currentNodes, node);
+      if (!nextNodes) return currentNodes;
+
+      if (currentNodes.length > 0) {
+        setEdges([]);
+        setSelectedNode(null);
+      }
+
+      return nextNodes;
+    });
   }, []);
+
+  const deleteNode = useCallback((nodeId) => {
+    setNodes((currentNodes) => {
+      const result = deleteNodeFromFlow(currentNodes, edges, nodeId);
+      setEdges(result.edges);
+      return result.nodes;
+    });
+    setSelectedNode(null);
+  }, [edges]);
 
   const updateNode = (id, newData) => {
     setNodes((currentNodes) => currentNodes.map((node) =>
@@ -167,7 +187,7 @@ function FlowBuilder() {
       <div className="nf-main nf-flow-editor__main">
         <NodePalette onAddNode={addNode} disabled={isBusy} />
         <FlowCanvas nodes={nodes} edges={edges} onNodesChange={onNodesChange} onEdgesChange={onEdgesChange} onConnect={onConnect} isValidConnection={(connection) => isValidConnection(connection, nodes)} onNodeClick={handleNodeClick} />
-        <NodeConfig node={selectedNode} onUpdate={updateNode} />
+        <NodeConfig node={selectedNode} onUpdate={updateNode} onDelete={deleteNode} />
       </div>
       {saveStatus && <div className="nf-flow-editor__status" role="status">{saveStatus}</div>}
     </div>
