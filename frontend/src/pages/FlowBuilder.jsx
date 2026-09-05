@@ -57,7 +57,22 @@ function FlowBuilder() {
   }, [nodes]);
 
   const addNode = useCallback((node) => {
-    setNodes((currentNodes) => [...currentNodes, node]);
+    setNodes((currentNodes) => {
+      if (currentNodes.length > 0) {
+        const shouldClear = window.confirm(
+          'Do you want to clear the current page before adding this node?'
+        );
+
+        if (!shouldClear) {
+          return currentNodes;
+        }
+
+        setEdges([]);
+        setSelectedNode(null);
+      }
+
+      return [node];
+    });
   }, []);
 
   const updateNode = (id, newData) => {
