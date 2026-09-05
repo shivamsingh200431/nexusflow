@@ -7,14 +7,14 @@ export function deleteNodeFromFlow(nodes = [], edges = [], nodeId) {
   };
 }
 
-export function addNodeToFlow(nodes = [], node, confirmFn = window.confirm) {
-  if (nodes.length === 0) {
-    return [node];
+export function addNodeToFlow(nodes = [], node, clearCanvas = null) {
+  if (clearCanvas === null) {
+    return { action: 'confirm', node };
   }
 
-  const shouldClear = confirmFn(
-    'This canvas already contains nodes. Clear the current canvas before adding this node?'
-  );
+  if (clearCanvas) {
+    return { action: 'clear-and-add', nodes: [node] };
+  }
 
-  return shouldClear ? [node] : null;
+  return { action: 'add', nodes: [...nodes, node] };
 }
