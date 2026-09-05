@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { addNodeToFlow, deleteNodeFromFlow } from './flowBuilderActions.js';
 
 const existingNodes = [
@@ -21,24 +21,31 @@ describe('Flow Builder actions', () => {
     });
   });
 
-  it('adds a node to an empty canvas without asking for confirmation', () => {
-    const confirm = vi.fn();
-
-    expect(addNodeToFlow([], newNode, confirm)).toEqual([newNode]);
-    expect(confirm).not.toHaveBeenCalled();
+  it('adds a node to an empty canvas without confirmation', () => {
+    expect(addNodeToFlow([], newNode, false)).toEqual({
+      action: 'add',
+      nodes: [newNode],
+    });
   });
 
-  it('asks before replacing a non-empty canvas and clears it when confirmed', () => {
-    const confirm = vi.fn(() => true);
-
-    expect(addNodeToFlow(existingNodes, newNode, confirm)).toEqual([newNode]);
-    expect(confirm).toHaveBeenCalledTimes(1);
+  it('asks only when the confirmation decision has not been made', () => {
+    expect(addNodeToFlow(existingNodes, newNode, null)).toEqual({
+      action: 'confirm',
+      node: newNode,
+    });
   });
 
-  it('keeps the existing canvas when replacement is declined', () => {
-    const confirm = vi.fn(() => false);
+  it('clears the canvas when the user chooses clear', () => {
+    expect(addNodeToFlow(existingNodes, newNode, true)).toEqual({
+      action: 'clear-and-add',
+      nodes: [newNode],
+    });
+  });
 
-    expect(addNodeToFlow(existingNodes, newNode, confirm)).toBeNull();
-    expect(confirm).toHaveBeenCalledTimes(1);
+  it('adds to the existing canvas when the user chooses keep', () => {
+    expect(addNodeToFlow(existingNodes, newNode, false)).toEqual({
+      action: 'add',
+      nodes: [...existingNodes, newNode],
+    });
   });
 });
