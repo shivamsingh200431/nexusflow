@@ -44,7 +44,7 @@ describe('validateFlow', () => {
   it('requires each supported node type to be present', () => {
     const nodes = validNodes.filter((node) => node.type !== 'threshold');
 
-    expect(validateFlow(makeFlow(nodes, validEdges.slice(0, 2)))).toEqual({
+    expect(validateFlow(makeFlow(nodes, validEdges.slice(0, 1)))).toEqual({
       valid: false,
       errors: ['Flow must contain at least one Threshold node.'],
     });
