@@ -58,17 +58,6 @@ function FlowBuilder() {
     setSelectedNode(node);
   }, []);
 
-  const applyAddedNode = useCallback((node, clearCanvas) => {
-    const result = addNodeToFlow(nodes, node, clearCanvas);
-
-    if (result.action === 'clear-and-add') {
-      setEdges([]);
-      setSelectedNode(null);
-    }
-
-    setNodes(result.nodes);
-  }, [nodes]);
-
   const addNode = useCallback((node) => {
     const result = addNodeToFlow(nodes, node, addConfirmationChoice);
 
@@ -88,7 +77,6 @@ function FlowBuilder() {
   const handleAddChoice = useCallback((clearCanvas) => {
     if (!pendingNode) return;
 
-    setAddConfirmationChoice(clearCanvas);
     const result = addNodeToFlow(nodes, pendingNode, clearCanvas);
 
     if (result.action === 'clear-and-add') {
@@ -97,6 +85,7 @@ function FlowBuilder() {
     }
 
     setNodes(result.nodes);
+    setAddConfirmationChoice(false);
     setPendingNode(null);
   }, [nodes, pendingNode]);
 
@@ -240,9 +229,7 @@ function FlowBuilder() {
               <button
                 className="nf-btn"
                 type="button"
-                onClick={() => {
-                  setPendingNode(null);
-                }}
+                onClick={() => setPendingNode(null)}
               >
                 Cancel
               </button>
