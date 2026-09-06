@@ -1,53 +1,42 @@
 import { Observable } from 'rxjs';
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+function getWsUrl() {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+  return apiBase.replace(/\/api\/?$/, '').replace(/^http/, 'ws') + '/ws';
+}
 
 export function telemetry$(deviceId) {
   return new Observable((subscriber) => {
-    let stopped = false;
-    let lastTelemetryId = null;
+    const socket = new WebSocket(getWsUrl());
 
-    const poll = async () => {
+    socket.onmessage = (event) => {
+      let payload;
       try {
-        const url = deviceId
-          ? `${API_BASE}/telemetry?deviceId=${encodeURIComponent(deviceId)}`
-          : `${API_BASE}/telemetry`;
-
-        const response = await fetch(url);
-
-        if (!response.ok) {
-          throw new Error(`Telemetry API returned ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.telemetry?.length) {
-          const latest = data.telemetry[0];
-
-          if (latest._id !== lastTelemetryId) {
-            lastTelemetryId = latest._id;
-
-            subscriber.next({
-              timestamp: latest.timestamp,
-              deviceId: latest.deviceId,
-              metrics: latest.metrics || {},
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Telemetry polling failed:', error.message);
+        payload = JSON.parse(event.data);
+      } catch {
+        return;
       }
 
-      if (!stopped) {
-        setTimeout(poll, 2000);
-      }
+      if (payload.type !== 'telemetry') return;
+      if (deviceId && payload.deviceId !== deviceId) return;
+
+      subscriber.next({
+        timestamp: payload.timestamp,
+        deviceId: payload.deviceId,
+        metrics: payload.data || {},
+      });
     };
 
-    poll();
+    socket.onerror = () => {
+      subscriber.error(new Error('WebSocket telemetry connection failed'));
+    };
+
+    socket.onclose = () => {
+      subscriber.complete();
+    };
 
     return () => {
-      stopped = true;
+      socket.close();
     };
   });
 }
