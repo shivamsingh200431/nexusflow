@@ -1,53 +1,69 @@
 import { Observable } from 'rxjs';
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const WS_BASE =
+  import.meta.env.VITE_WS_URL || 'ws://localhost:5000/ws';
 
 export function telemetry$(deviceId) {
   return new Observable((subscriber) => {
+    let socket;
     let stopped = false;
-    let lastTelemetryId = null;
+    let reconnectTimer;
 
-    const poll = async () => {
-      try {
-        const url = deviceId
-          ? `${API_BASE}/telemetry?deviceId=${encodeURIComponent(deviceId)}`
-          : `${API_BASE}/telemetry`;
+    const connect = () => {
+      if (stopped) return;
 
-        const response = await fetch(url);
+      socket = new WebSocket(WS_BASE);
 
-        if (!response.ok) {
-          throw new Error(`Telemetry API returned ${response.status}`);
+      socket.onopen = () => {
+        console.log('Telemetry WebSocket connected');
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+
+          if (message.type !== 'telemetry') return;
+
+          if (deviceId && message.deviceId !== deviceId) return;
+
+          subscriber.next({
+            timestamp: message.timestamp,
+            deviceId: message.deviceId,
+            metrics: message.data || {},
+          });
+        } catch (error) {
+          console.error(
+            'Telemetry WebSocket message parsing failed:',
+            error.message
+          );
         }
+      };
 
-        const data = await response.json();
+      socket.onerror = (error) => {
+        console.error('Telemetry WebSocket error:', error);
+      };
 
-        if (data.telemetry?.length) {
-          const latest = data.telemetry[0];
+      socket.onclose = () => {
+        if (stopped) return;
 
-          if (latest._id !== lastTelemetryId) {
-            lastTelemetryId = latest._id;
+        console.warn('Telemetry WebSocket disconnected');
 
-            subscriber.next({
-              timestamp: latest.timestamp,
-              deviceId: latest.deviceId,
-              metrics: latest.metrics || {},
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Telemetry polling failed:', error.message);
-      }
-
-      if (!stopped) {
-        setTimeout(poll, 2000);
-      }
+        reconnectTimer = setTimeout(connect, 2000);
+      };
     };
 
-    poll();
+    connect();
 
     return () => {
       stopped = true;
+
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+
+      if (socket) {
+        socket.close();
+      }
     };
   });
 }

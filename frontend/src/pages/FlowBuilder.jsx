@@ -171,9 +171,13 @@ function FlowBuilder() {
     }
   }, []);
 
-  useEffect(() => {
+useEffect(() => {
+  const timer = setTimeout(() => {
     fetchSavedFlows();
-  }, [fetchSavedFlows]);
+  }, 0);
+
+  return () => clearTimeout(timer);
+}, [fetchSavedFlows]);
 
   const isBusy = isSaving || isLoading || isTesting;
 

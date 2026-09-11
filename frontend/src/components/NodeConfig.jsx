@@ -35,25 +35,28 @@ export default function NodeConfig({ node, onUpdate, onDelete }) {
   const [devices, setDevices] = useState([])
   const [devicesLoading, setDevicesLoading] = useState(false)
 
-  useEffect(() => {
-    if (!node || node.type !== 'sensor') return
+useEffect(() => {
+  if (!node || node.type !== 'sensor') return
 
-    let cancelled = false
-    setDevicesLoading(true)
+  let cancelled = false
+  const loadingTimer = setTimeout(() => setDevicesLoading(true), 0)
 
-    fetchDevices()
-      .then((data) => {
-        if (!cancelled) setDevices(data.devices || [])
-      })
-      .catch((error) => {
-        console.error('Failed to load devices for sensor config:', error)
-      })
-      .finally(() => {
-        if (!cancelled) setDevicesLoading(false)
-      })
+  fetchDevices()
+    .then((data) => {
+      if (!cancelled) setDevices(data.devices || [])
+    })
+    .catch((error) => {
+      console.error('Failed to load devices for sensor config:', error)
+    })
+    .finally(() => {
+      if (!cancelled) setDevicesLoading(false)
+    })
 
-    return () => { cancelled = true }
-  }, [node?.id, node?.type])
+  return () => {
+    cancelled = true
+    clearTimeout(loadingTimer)
+  }
+}, [node])
 
   if (!node) {
     return (
