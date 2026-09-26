@@ -28,22 +28,29 @@ describe('Flow Builder actions', () => {
     });
   });
 
-  it('asks only when the confirmation decision has not been made', () => {
-    expect(addNodeToFlow(existingNodes, newNode, null)).toEqual({
+  it('asks when adding to a saved flow without a confirmation decision', () => {
+    expect(addNodeToFlow(existingNodes, newNode, null, true)).toEqual({
       action: 'confirm',
       node: newNode,
     });
   });
 
+  it('does not ask on a new canvas even when multiple nodes exist', () => {
+    expect(addNodeToFlow(existingNodes, newNode, null, false)).toEqual({
+      action: 'add',
+      nodes: [...existingNodes, newNode],
+    });
+  });
+
   it('clears the canvas when the user chooses clear', () => {
-    expect(addNodeToFlow(existingNodes, newNode, true)).toEqual({
+    expect(addNodeToFlow(existingNodes, newNode, true, true)).toEqual({
       action: 'clear-and-add',
       nodes: [newNode],
     });
   });
 
   it('adds to the existing canvas when the user chooses keep', () => {
-    expect(addNodeToFlow(existingNodes, newNode, false)).toEqual({
+    expect(addNodeToFlow(existingNodes, newNode, false, true)).toEqual({
       action: 'add',
       nodes: [...existingNodes, newNode],
     });
