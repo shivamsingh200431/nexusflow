@@ -38,6 +38,7 @@ function FlowBuilder() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [addConfirmationChoice, setAddConfirmationChoice] = useState(null);
   const [pendingNode, setPendingNode] = useState(null);
+  const [isSavedFlow, setIsSavedFlow] = useState(false);
 
   const onNodesChange = useCallback((changes) => {
     setNodes((currentNodes) => applyNodeChanges(changes, currentNodes));
@@ -59,7 +60,7 @@ function FlowBuilder() {
   }, []);
 
   const addNode = useCallback((node) => {
-    const result = addNodeToFlow(nodes, node, addConfirmationChoice);
+    const result = addNodeToFlow(nodes, node, addConfirmationChoice, isSavedFlow);
 
     if (result.action === 'confirm') {
       setPendingNode(node);
@@ -72,7 +73,7 @@ function FlowBuilder() {
     }
 
     setNodes(result.nodes);
-  }, [nodes, addConfirmationChoice]);
+  }, [nodes, addConfirmationChoice, isSavedFlow]);
 
   const handleAddChoice = useCallback((clearCanvas) => {
     if (!pendingNode) return;
@@ -87,6 +88,7 @@ function FlowBuilder() {
     setNodes(result.nodes);
     setAddConfirmationChoice(false);
     setPendingNode(null);
+    if (clearCanvas) setIsSavedFlow(false);
   }, [nodes, pendingNode]);
 
   const deleteNode = useCallback((nodeId) => {
@@ -131,6 +133,7 @@ function FlowBuilder() {
       setSaveStatus(engineStatus?.state === 'error'
         ? 'Flow saved, but rule engine failed to restart'
         : 'Flow saved and rule engine updated');
+      setIsSavedFlow(true);
       await fetchSavedFlows();
     } catch (error) {
       console.error('Save failed:', error);
@@ -164,6 +167,7 @@ function FlowBuilder() {
     try {
       setNodes(flow.nodes || []);
       setEdges(flow.edges || []);
+      setIsSavedFlow(true);
       setSelectedNode(null);
       setSaveStatus(`Loaded flow: ${flow._id || 'saved flow'}`);
     } finally {
