@@ -7,8 +7,8 @@ export function deleteNodeFromFlow(nodes = [], edges = [], nodeId) {
   };
 }
 
-export function addNodeToFlow(nodes = [], node, clearCanvas = null) {
-  if (nodes.length === 0 || clearCanvas === false) {
+export function addNodeToFlow(nodes = [], node, clearCanvas = null, isSavedFlow = false) {
+  if (!isSavedFlow || nodes.length === 0 || clearCanvas === false) {
     return { action: 'add', nodes: [...nodes, node] };
   }
 
